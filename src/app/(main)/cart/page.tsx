@@ -1,9 +1,12 @@
 "use client";
 
 import { useEffect } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useCartStore } from "@/features/cart/store/cartStore";
 import { cartService } from "@/features/cart/services/cartService";
+import { useProductsStore } from "@/features/products/store/productsStore";
+import { productsService } from "@/features/products/services/productsService";
 import { ShieldCheck, Truck, X, Loader2 } from "lucide-react";
 import { useAuthStore } from "@/features/auth/store/authStore";
 
@@ -12,12 +15,19 @@ export default function CartPage() {
   const isLoading = useCartStore((s) => s.isLoading);
   const error = useCartStore((s) => s.error);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const products = useProductsStore((s) => s.products);
 
   useEffect(() => {
     if (isAuthenticated) {
       cartService.getCart();
     }
   }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (products.length === 0) {
+      productsService.getProducts({ limit: 100 });
+    }
+  }, [products.length]);
 
   const items = cart?.items ?? [];
   const itemCount = items.reduce((sum, i) => sum + i.quantity, 0);
@@ -36,7 +46,12 @@ export default function CartPage() {
   };
 
   const formatAttributes = (attrs: Record<string, string>) =>
-    Object.values(attrs).join(" / ");
+    Object.entries(attrs)
+      .map(
+        ([key, value]) =>
+          `${key.charAt(0).toUpperCase() + key.slice(1)}: ${value}`,
+      )
+      .join(" / ");
 
   return (
     <main className="min-h-screen bg-background pt-40 pb-20">
@@ -94,20 +109,44 @@ export default function CartPage() {
                 <div key={item.id}>
                   {index > 0 && <div className="border-t border-white/10" />}
                   <div className="py-8 flex gap-6">
+                    {/* Thumbnail */}
+                    {(() => {
+                      const productId = item.variant?.product?.id;
+                      const fullProduct = products.find((p) => p.id === productId);
+                      const mainImage =
+                        fullProduct?.images?.find((img) => img.isMain) ??
+                        fullProduct?.images?.[0];
+                      return mainImage ? (
+                        <div className="w-20 h-24 shrink-0 overflow-hidden bg-card">
+                          <Image
+                            src={mainImage.url}
+                            alt={mainImage.alt ?? item.variant?.product?.name ?? ""}
+                            width={80}
+                            height={96}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-20 h-24 shrink-0 bg-card" />
+                      );
+                    })()}
+
                     {/* Product Info */}
                     <div className="flex-1 flex flex-col justify-between">
                       <div className="flex items-start justify-between">
                         <div>
                           <h3 className="text-sm md:text-base font-semibold tracking-widest` text-white uppercase">
-                            {item.variant.sku}
+                            {item?.variant?.product?.name}
                           </h3>
                           <p className="text-xs tracking-widest` text-muted uppercase mt-1">
-                            {formatAttributes(item.variant.attributes)}
+                            {item?.variant?.attributes
+                              ? formatAttributes(item.variant.attributes)
+                              : "Sin atributos"}
                           </p>
-                          {item.unitPrice !== item.variant.price && (
+                          {item?.unitPrice !== item?.variant?.price && (
                             <p className="text-[0.6rem] tracking-widest` text-accent mt-1">
                               Precio actual: $
-                              {item.variant.price.toLocaleString("en-US", {
+                              {item?.variant?.price.toLocaleString("en-US", {
                                 minimumFractionDigits: 2,
                               })}
                             </p>
@@ -128,9 +167,9 @@ export default function CartPage() {
                             onClick={() =>
                               handleUpdateQuantity(item.id, item.quantity - 1)
                             }
-                            className="text-[0.65rem] tracking-[0.15em] text-muted hover:text-white transition-colors cursor-pointer uppercase"
+                            className="text-[2rem] tracking-[0.15em] text-muted hover:text-white transition-colors cursor-pointer uppercase"
                           >
-                            Menos
+                            -
                           </button>
                           <span className="text-sm text-white font-medium w-6 text-center">
                             {String(item.quantity).padStart(2, "0")}
@@ -139,17 +178,17 @@ export default function CartPage() {
                             onClick={() =>
                               handleUpdateQuantity(item.id, item.quantity + 1)
                             }
-                            disabled={item.quantity >= item.variant.stock}
-                            className="text-[0.65rem] tracking-[0.15em] text-muted hover:text-white transition-colors cursor-pointer uppercase disabled:opacity-30 disabled:cursor-not-allowed"
+                            disabled={item.quantity >= item.variant?.stock}
+                            className="text-[2rem] tracking-[0.15em] text-muted hover:text-white transition-colors cursor-pointer uppercase disabled:opacity-30 disabled:cursor-not-allowed"
                           >
-                            Más
+                            +
                           </button>
                         </div>
 
                         {/* Stock indicator */}
-                        {item.variant.stock <= 3 && (
+                        {item?.variant?.stock <= 3 && (
                           <span className="text-[0.6rem] tracking-widest text-accent uppercase">
-                            {item.variant.stock} disponibles
+                            {item?.variant?.stock} disponibles
                           </span>
                         )}
 
