@@ -10,15 +10,13 @@ import { categoriesService } from "@/features/categories/services/categoriesServ
 import { Category } from "@/features/categories/types/state.types";
 import { useToast } from "@/components/ui/Toast";
 import { useEditProductForm } from "../hooks/useEditProductForm";
-import { AddVariantForm } from "./AddVariantForm";
+import { VariantForm } from "./VariantForm";
+import { VariantRow } from "./VariantRow";
 import type { ProductVariant } from "../types/state.types";
 
 interface EditProductFormProps {
   productId: string;
 }
-
-const parsePrice = (price: string | number) =>
-  typeof price === "number" ? price : Number(price) || 0;
 
 export const EditProductForm = ({ productId }: EditProductFormProps) => {
   const router = useRouter();
@@ -38,6 +36,8 @@ export const EditProductForm = ({ productId }: EditProductFormProps) => {
     isLoading,
     onSubmit,
     appendVariant,
+    replaceVariant,
+    removeVariant,
   } = useEditProductForm({
     productId,
     onUpdated: (updated) => {
@@ -117,6 +117,8 @@ export const EditProductForm = ({ productId }: EditProductFormProps) => {
     setShowAddVariant(false);
     showToast("Variante creada");
   };
+
+  const canDeleteVariant = product.variants.length > 1;
 
   return (
     <div className="space-y-6 max-w-3xl">
@@ -273,52 +275,16 @@ export const EditProductForm = ({ productId }: EditProductFormProps) => {
           </p>
         ) : (
           <div className="space-y-2">
-            {product.variants.map((variant) => {
-              const stock = variant.stock ?? 0;
-              return (
-                <div
-                  key={variant.id}
-                  className="flex flex-wrap items-center gap-x-6 gap-y-2 py-3 px-4 bg-card-light/40 rounded-sm border border-white/5"
-                >
-                  <span className="font-mono text-xs text-white/90 min-w-[140px]">
-                    {variant.sku}
-                  </span>
-                  <div className="flex flex-wrap gap-1.5 flex-1">
-                    {variant.attributes &&
-                    Object.keys(variant.attributes).length > 0 ? (
-                      Object.entries(variant.attributes).map(([key, value]) => (
-                        <span
-                          key={key}
-                          className="inline-block px-2 py-0.5 bg-card rounded-sm text-[0.65rem] tracking-[0.05em] text-white/70 uppercase"
-                        >
-                          {key}: {value}
-                        </span>
-                      ))
-                    ) : (
-                      <span className="text-[0.65rem] text-muted italic">
-                        Sin atributos
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-6 text-xs">
-                    <span className="text-white/80">
-                      ${parsePrice(variant.price).toLocaleString("en-US")}
-                    </span>
-                    <span
-                      className={`tracking-[0.1em] uppercase text-[0.65rem] ${
-                        stock === 0
-                          ? "text-danger"
-                          : stock <= 3
-                            ? "text-warning"
-                            : "text-muted"
-                      }`}
-                    >
-                      {stock} en stock
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
+            {product.variants.map((variant) => (
+              <VariantRow
+                key={variant.id}
+                productId={productId}
+                variant={variant}
+                canDelete={canDeleteVariant}
+                onUpdated={replaceVariant}
+                onDeleted={removeVariant}
+              />
+            ))}
           </div>
         )}
 
@@ -329,9 +295,9 @@ export const EditProductForm = ({ productId }: EditProductFormProps) => {
         >
           <div className="overflow-hidden">
             <div className="pt-2">
-              <AddVariantForm
+              <VariantForm
                 productId={productId}
-                onAdded={handleVariantAdded}
+                onSuccess={handleVariantAdded}
                 onCancel={() => setShowAddVariant(false)}
               />
             </div>

@@ -13,6 +13,8 @@ import {
   ProductsResponse,
   UpdateProductDto,
   UpdateProductResponse,
+  UpdateVariantDto,
+  UpdateVariantResponse,
 } from "../types/state.types";
 
 export const productsService = {
@@ -80,6 +82,33 @@ export const productsService = {
     );
     logger.info("PRODUCTS_SERVICE", `Variante agregada a producto ${productId}`);
     return data;
+  },
+
+  updateVariant: async (
+    productId: string,
+    variantId: string,
+    payload: UpdateVariantDto,
+  ): Promise<UpdateVariantResponse> => {
+    const { data } = await apiClient.patch<UpdateVariantResponse>(
+      `/products/${productId}/variants/${variantId}`,
+      payload,
+    );
+    logger.info(
+      "PRODUCTS_SERVICE",
+      `Variante ${variantId} actualizada (producto ${productId})`,
+    );
+    return data;
+  },
+
+  deleteVariant: async (
+    productId: string,
+    variantId: string,
+  ): Promise<void> => {
+    await apiClient.delete(`/products/${productId}/variants/${variantId}`);
+    logger.info(
+      "PRODUCTS_SERVICE",
+      `Variante ${variantId} eliminada (producto ${productId})`,
+    );
   },
 
   deleteProduct: async (id: string): Promise<void> => {

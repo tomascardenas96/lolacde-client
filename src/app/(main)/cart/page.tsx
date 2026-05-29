@@ -56,7 +56,7 @@ export default function CartPage() {
   return (
     <main className="min-h-screen bg-background pt-40 pb-20">
       {/* Header */}
-      <section className="px-6 md:px-20 lg:px-32 mb-12">
+      <section className="px-6 md:px-20 lg:px-24 2xl:px-28 mb-12">
         <h1 className="heading-display text-5xl md:text-7xl lg:text-8xl text-white mb-3">
           CARRITO DE <br /> COMPRAS
         </h1>
@@ -66,7 +66,7 @@ export default function CartPage() {
       </section>
 
       {/* Content */}
-      <section className="px-6 md:px-20 lg:px-32">
+      <section className="px-6 md:px-20 lg:px-24 2xl:px-28">
         {!isAuthenticated ? (
           <div className="text-center py-20">
             <p className="text-muted text-sm tracking-widest uppercase mb-6">
@@ -112,7 +112,9 @@ export default function CartPage() {
                     {/* Thumbnail */}
                     {(() => {
                       const productId = item.variant?.product?.id;
-                      const fullProduct = products.find((p) => p.id === productId);
+                      const fullProduct = products.find(
+                        (p) => p.id === productId,
+                      );
                       const mainImage =
                         fullProduct?.images?.find((img) => img.isMain) ??
                         fullProduct?.images?.[0];
@@ -120,7 +122,9 @@ export default function CartPage() {
                         <div className="w-20 h-24 shrink-0 overflow-hidden bg-card">
                           <Image
                             src={mainImage.url}
-                            alt={mainImage.alt ?? item.variant?.product?.name ?? ""}
+                            alt={
+                              mainImage.alt ?? item.variant?.product?.name ?? ""
+                            }
                             width={80}
                             height={96}
                             className="w-full h-full object-cover"

@@ -86,6 +86,16 @@ export interface AddVariantDto {
 
 export type AddVariantResponse = ProductVariant;
 
+// --- Update variant DTO ---
+
+export interface UpdateVariantDto {
+  price?: number;
+  stock?: number;
+  attributes?: Record<string, string>;
+}
+
+export type UpdateVariantResponse = ProductVariant;
+
 export interface ProductsResponse {
   total: number;
   products: Product[];

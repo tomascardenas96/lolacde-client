@@ -1,32 +1,33 @@
 "use client";
 
 import { Loader2, Plus, Trash2 } from "lucide-react";
-import { useAddVariantForm } from "../hooks/useAddVariantForm";
+import { useVariantForm } from "../hooks/useVariantForm";
 import type { ProductVariant } from "../types/state.types";
 
-interface AddVariantFormProps {
+interface VariantFormProps {
   productId: string;
-  onAdded?: (variant: ProductVariant) => void;
+  /** Si se pasa, el formulario edita esa variante en lugar de crear una nueva. */
+  variant?: ProductVariant;
+  onSuccess?: (variant: ProductVariant) => void;
   onCancel?: () => void;
 }
 
-export const AddVariantForm = ({
+export const VariantForm = ({
   productId,
-  onAdded,
+  variant,
+  onSuccess,
   onCancel,
-}: AddVariantFormProps) => {
+}: VariantFormProps) => {
   const {
     form,
     attributesArray,
     addAttribute,
     serverError,
     isLoading,
+    isEdit,
     onSubmit,
     reset,
-  } = useAddVariantForm({
-    productId,
-    onAdded,
-  });
+  } = useVariantForm({ productId, variant, onSuccess });
 
   const {
     register,
@@ -42,7 +43,7 @@ export const AddVariantForm = ({
     <div className="p-4 bg-card-light/40 rounded-sm border border-white/5 space-y-4">
       <div className="flex items-center justify-between">
         <span className="text-[10px] tracking-[0.2em] text-muted uppercase">
-          Nueva variante
+          {isEdit ? "Editar variante" : "Nueva variante"}
         </span>
       </div>
 
@@ -180,8 +181,10 @@ export const AddVariantForm = ({
           {isLoading ? (
             <>
               <Loader2 size={12} className="animate-spin" />
-              Creando
+              {isEdit ? "Guardando" : "Creando"}
             </>
+          ) : isEdit ? (
+            "Guardar variante"
           ) : (
             "Crear variante"
           )}

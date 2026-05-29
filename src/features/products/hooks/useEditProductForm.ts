@@ -134,6 +134,28 @@ export const useEditProductForm = ({
       prev ? { ...prev, variants: [...prev.variants, variant] } : prev,
     );
 
+  const replaceVariant = (variant: ProductVariant) =>
+    setProduct((prev) =>
+      prev
+        ? {
+            ...prev,
+            variants: prev.variants.map((v) =>
+              v.id === variant.id ? variant : v,
+            ),
+          }
+        : prev,
+    );
+
+  const removeVariant = (variantId: string) =>
+    setProduct((prev) =>
+      prev
+        ? {
+            ...prev,
+            variants: prev.variants.filter((v) => v.id !== variantId),
+          }
+        : prev,
+    );
+
   return {
     form,
     product,
@@ -143,5 +165,7 @@ export const useEditProductForm = ({
     isLoading: isPending,
     onSubmit: form.handleSubmit(onSubmit),
     appendVariant,
+    replaceVariant,
+    removeVariant,
   };
 };
