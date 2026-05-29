@@ -1,6 +1,6 @@
 export function AboutSection() {
   return (
-    <section className="px-6 md:px-24 py-24 bg-background">
+    <section className="px-6 md:px-24 2xl:px-28 py-24 bg-background">
       {/* Top text area */}
       <div className="flex flex-col md:flex-row md:items-start md:justify-between mb-16 gap-8">
         <div className="max-w-xl">
