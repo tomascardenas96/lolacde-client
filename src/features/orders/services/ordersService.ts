@@ -92,4 +92,14 @@ export const ordersService = {
       setLoading(false);
     }
   },
+
+  // Relectura silenciosa de la orden (sin togglear el loading global).
+  // Se usa para el polling al volver de Mercado Pago, donde el estado real
+  // lo confirma el webhook server-to-server y puede tardar unos segundos.
+  refreshOrder: async (orderId: string): Promise<Order> => {
+    const { setSelectedOrder } = useOrdersStore.getState();
+    const { data } = await apiClient.get<Order>(`/orders/${orderId}`);
+    setSelectedOrder(data);
+    return data;
+  },
 };

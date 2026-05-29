@@ -279,7 +279,7 @@ export default function CheckoutPage() {
                 <div className="space-y-4 mb-6">
                   {items.map((item) => (
                     <div key={item.id} className="flex justify-between">
-                      <div className="flex-1 mr-4">
+                      <div className="flex-1 min-w-0 mr-4">
                         <p className="text-xs text-white uppercase truncate">
                           {item.variant.product.name}
                         </p>

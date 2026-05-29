@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect } from "react";
-import { useParams } from "next/navigation";
+import { Suspense, useEffect, useRef, useState } from "react";
+import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useOrdersStore } from "@/features/orders/store/ordersStore";
 import { ordersService } from "@/features/orders/services/ordersService";
 import { useAuthStore } from "@/features/auth/store/authStore";
 import { OrderStatus } from "@/features/orders/types/state.types";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Clock, Loader2, XCircle } from "lucide-react";
 
 const STATUS_LABELS: Record<OrderStatus, string> = {
   pending: "Pendiente",
@@ -25,18 +25,112 @@ const STATUS_COLORS: Record<OrderStatus, string> = {
   cancelled: "text-red-400 border-red-400/30",
 };
 
+// Polling al volver de Mercado Pago: el estado real lo confirma el webhook
+// server-to-server, asi que la orden puede seguir "pending" unos segundos.
+const POLL_INTERVAL_MS = 2000;
+const POLL_MAX_TRIES = 6; // ~12s maximo
+
+type PaymentHint = "success" | "failure" | "pending";
+
 export default function OrderDetailPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-background pt-28 pb-20">
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="w-6 h-6 text-muted animate-spin" />
+          </div>
+        </main>
+      }
+    >
+      <OrderDetailContent />
+    </Suspense>
+  );
+}
+
+function OrderDetailContent() {
   const { orderId } = useParams<{ orderId: string }>();
+  const searchParams = useSearchParams();
+  const paymentHint = searchParams.get("payment") as PaymentHint | null;
+
   const order = useOrdersStore((s) => s.selectedOrder);
   const isLoading = useOrdersStore((s) => s.isLoading);
   const error = useOrdersStore((s) => s.error);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
+  const [isConfirming, setIsConfirming] = useState(
+    paymentHint !== null && paymentHint !== "failure",
+  );
+  const [isPaying, setIsPaying] = useState(false);
+  const [payError, setPayError] = useState<string | null>(null);
+  const pollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Carga inicial (con spinner global).
   useEffect(() => {
     if (isAuthenticated && orderId) {
       ordersService.getOrder(orderId);
     }
   }, [isAuthenticated, orderId]);
+
+  // Polling de confirmacion al volver de Mercado Pago.
+  useEffect(() => {
+    if (!isAuthenticated || !orderId) return;
+    // Solo confirmamos si venimos del retorno de MP (hay query param)
+    // y el hint no es failure (el fallo es definitivo del lado del provider).
+    // En esos casos isConfirming ya arranca en false, no hace falta tocarlo.
+    if (paymentHint === null || paymentHint === "failure") {
+      return;
+    }
+
+    let tries = 0;
+    let active = true;
+
+    const poll = async () => {
+      try {
+        const o = await ordersService.refreshOrder(orderId);
+        tries += 1;
+        // Seguir consultando mientras siga pending y no se agoten los intentos.
+        if (active && o.status === "pending" && tries < POLL_MAX_TRIES) {
+          pollTimer.current = setTimeout(poll, POLL_INTERVAL_MS);
+        } else if (active) {
+          setIsConfirming(false);
+        }
+      } catch {
+        // No interrumpimos el flujo por un fallo puntual de red.
+        if (active) setIsConfirming(false);
+      }
+    };
+
+    poll();
+
+    return () => {
+      active = false;
+      if (pollTimer.current) clearTimeout(pollTimer.current);
+    };
+  }, [isAuthenticated, orderId, paymentHint]);
+
+  // Re-iniciar el pago de una orden pendiente (vuelve a abrir Mercado Pago).
+  const handlePay = async () => {
+    if (!order) return;
+    setIsPaying(true);
+    setPayError(null);
+    try {
+      const payment = await ordersService.pay(order.id, {
+        provider: "mercadopago",
+      });
+      if (payment.redirectUrl) {
+        window.location.href = payment.redirectUrl;
+        return;
+      }
+      setPayError("El proveedor no devolvio una URL de pago");
+    } catch (err: unknown) {
+      const msg =
+        err instanceof Error ? err.message : "Error al iniciar el pago";
+      setPayError(msg);
+    } finally {
+      setIsPaying(false);
+    }
+  };
 
   const total =
     order?.items.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0) ?? 0;
@@ -58,7 +152,16 @@ export default function OrderDetailPage() {
       </section>
 
       <section className="px-6 md:px-20 lg:px-32">
-        {isLoading ? (
+        {/* Banner de confirmacion de pago al volver de Mercado Pago */}
+        {paymentHint !== null && order && (
+          <PaymentBanner
+            status={order.status}
+            hint={paymentHint}
+            confirming={isConfirming}
+          />
+        )}
+
+        {isLoading && !order ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="w-6 h-6 text-muted animate-spin" />
           </div>
@@ -169,19 +272,120 @@ export default function OrderDetailPage() {
                 </div>
               </div>
 
-              {/* Pay button for pending orders */}
+              {/* Pago para ordenes pendientes: re-inicia Mercado Pago */}
               {order.status === "pending" && (
-                <Link
-                  href={`/orders/${order.id}/pay`}
-                  className="block w-full bg-white text-black py-4 text-[0.65rem] tracking-[0.2em] uppercase font-semibold hover:bg-foreground transition-colors text-center"
-                >
-                  Pagar ahora
-                </Link>
+                <div className="space-y-3">
+                  <button
+                    type="button"
+                    onClick={handlePay}
+                    disabled={isPaying}
+                    className="flex w-full items-center justify-center gap-2 bg-white text-black py-4 text-[0.65rem] tracking-[0.2em] uppercase font-semibold hover:bg-foreground transition-colors text-center cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    {isPaying ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Redirigiendo...
+                      </>
+                    ) : (
+                      "Pagar ahora"
+                    )}
+                  </button>
+                  {payError && (
+                    <p className="text-red-400 text-xs tracking-widest">
+                      {payError}
+                    </p>
+                  )}
+                </div>
               )}
             </div>
           </div>
         )}
       </section>
     </main>
+  );
+}
+
+function PaymentBanner({
+  status,
+  hint,
+  confirming,
+}: {
+  status: OrderStatus;
+  hint: PaymentHint;
+  confirming: boolean;
+}) {
+  // El estado de la orden (confirmado por webhook) manda sobre el hint de UX.
+  if (status === "paid") {
+    return (
+      <Banner
+        icon={<CheckCircle2 className="w-5 h-5 text-green-400" />}
+        className="border-green-400/30 bg-green-400/5"
+        title="Pago confirmado"
+        text="Tu pago fue aprobado. Estamos preparando tu pedido."
+      />
+    );
+  }
+
+  if (status === "cancelled") {
+    return (
+      <Banner
+        icon={<XCircle className="w-5 h-5 text-red-400" />}
+        className="border-red-400/30 bg-red-400/5"
+        title="Pago no completado"
+        text="El pago fue rechazado o cancelado. Puedes intentar nuevamente."
+      />
+    );
+  }
+
+  // Orden todavia pending: distinguimos si seguimos confirmando o si el
+  // provider ya nos aviso de un fallo.
+  if (hint === "failure") {
+    return (
+      <Banner
+        icon={<XCircle className="w-5 h-5 text-red-400" />}
+        className="border-red-400/30 bg-red-400/5"
+        title="Pago no completado"
+        text="No pudimos procesar el pago. Puedes intentar nuevamente."
+      />
+    );
+  }
+
+  return (
+    <Banner
+      icon={
+        confirming ? (
+          <Loader2 className="w-5 h-5 text-yellow-400 animate-spin" />
+        ) : (
+          <Clock className="w-5 h-5 text-yellow-400" />
+        )
+      }
+      className="border-yellow-400/30 bg-yellow-400/5"
+      title="Confirmando tu pago"
+      text="Estamos esperando la confirmacion del pago. Esto puede tardar unos segundos."
+    />
+  );
+}
+
+function Banner({
+  icon,
+  className,
+  title,
+  text,
+}: {
+  icon: React.ReactNode;
+  className: string;
+  title: string;
+  text: string;
+}) {
+  return (
+    <div className={`mb-10 flex items-start gap-4 border p-5 ${className}`}>
+      <div className="mt-0.5 shrink-0">{icon}</div>
+      <div>
+        <p className="text-[0.7rem] tracking-[0.2em] uppercase text-white font-semibold">
+          {title}
+        </p>
+        <p className="text-xs text-muted mt-1">{text}</p>
+      </div>
+    </div>
   );
 }
