@@ -85,7 +85,7 @@ export function Navbar() {
     <nav
       className={`left-0 right-0 z-50 flex items-center justify-between  transition-[padding,background-color] duration-500 ease-in-out ${
         isFixed
-          ? "fixed top-0 animate-navbar-slide-down md:px-22 bg-black/15 py-5 backdrop-blur-sm"
+          ? "fixed top-0 animate-navbar-slide-down md:px-28 bg-black/15 py-5 backdrop-blur-sm"
           : "absolute top-0 animate-navbar-slide-up md:px-40 bg-transparent py-4"
       }`}
     >
@@ -101,9 +101,9 @@ export function Navbar() {
           <li key={link.href}>
             <Link
               href={link.href}
-              className={`font-manrope tracking-[0.1rem] uppercase text-[0.7rem] font-medium text-neutral-400 hover:text-white transition-colors ${
+              className={`font-manrope tracking-[0.1rem] uppercase text-[0.7rem] py-3 font-medium text-neutral-400 hover:text-white transition-colors ${
                 pathname === link.href
-                  ? "text-white underline underline-offset-4 decoration-accent"
+                  ? "text-white underline underline-offset-10 decoration-accent"
                   : "text-[#a7a7a7]"
               }`}
             >

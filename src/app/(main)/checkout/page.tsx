@@ -281,11 +281,16 @@ export default function CheckoutPage() {
                     <div key={item.id} className="flex justify-between">
                       <div className="flex-1 mr-4">
                         <p className="text-xs text-white uppercase truncate">
-                          {item.variant.sku}
+                          {item.variant.product.name}
                         </p>
                         <p className="text-[0.6rem] text-muted">
-                          {Object.values(item.variant.attributes).join(" / ")} x{" "}
-                          {item.quantity}
+                          {Object.entries(item.variant.attributes)
+                            .map(
+                              ([key, value]) =>
+                                `${key.charAt(0).toUpperCase() + key.slice(1)}: ${value}`,
+                            )
+                            .join(" / ")}{" "}
+                          x {item.quantity}
                         </p>
                       </div>
                       <span className="text-xs text-white shrink-0">

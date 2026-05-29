@@ -1,6 +1,6 @@
 export function CtaSection() {
   return (
-    <section className="px-6 md:px-16 py-40 bg-background text-center">
+    <section className="px-6 md:px-24 py-40 bg-background text-center">
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center justify-center gap-3 mb-6">
           <div className="w-12 h-px bg-accent/40" />
@@ -9,7 +9,7 @@ export function CtaSection() {
           </p>
           <div className="w-12 h-px bg-accent/40" />
         </div>
-        <h2 className="heading-display text-5xl md:text-7xl lg:text-7xl text-white mb-8">
+        <h2 className="heading-display text-5xl md:text-6xl lg:text-6xl text-white mb-8">
           ¿QUERES CONTACTARTE CON NOSOTROS?
         </h2>
         <p className="text-sm text-muted mb-12 max-w-lg mx-auto">

@@ -30,6 +30,7 @@ export default function ContactPage() {
           }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/70 to-black/30" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-transparent to-transparent" />
         <div className="relative z-10 px-6 md:px-20 lg:px-32 pb-16 w-full">
           <p className="text-[10px] tracking-[0.35em] text-accent mb-4 uppercase">
             Contacto

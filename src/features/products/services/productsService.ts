@@ -3,11 +3,16 @@ import { logger } from "@/lib/logger";
 import { AxiosError } from "axios";
 import { useProductsStore } from "../store/productsStore";
 import {
+  AddVariantDto,
+  AddVariantResponse,
   CreateProductDto,
   CreateProductResponse,
   GetProductsParams,
+  Product,
   ProductImage,
   ProductsResponse,
+  UpdateProductDto,
+  UpdateProductResponse,
 } from "../types/state.types";
 
 export const productsService = {
@@ -45,6 +50,53 @@ export const productsService = {
     );
     logger.info("PRODUCTS_SERVICE", `Producto creado: ${data.id}`);
     return data;
+  },
+
+  getProductById: async (id: string): Promise<Product> => {
+    const { data } = await apiClient.get<Product>(`/products/${id}`);
+    logger.info("PRODUCTS_SERVICE", `Producto obtenido: ${id}`);
+    return data;
+  },
+
+  updateProduct: async (
+    id: string,
+    payload: UpdateProductDto,
+  ): Promise<UpdateProductResponse> => {
+    const { data } = await apiClient.patch<UpdateProductResponse>(
+      `/products/${id}`,
+      payload,
+    );
+    logger.info("PRODUCTS_SERVICE", `Producto actualizado: ${id}`);
+    return data;
+  },
+
+  addVariant: async (
+    productId: string,
+    payload: AddVariantDto,
+  ): Promise<AddVariantResponse> => {
+    const { data } = await apiClient.post<AddVariantResponse>(
+      `/products/${productId}/variants`,
+      payload,
+    );
+    logger.info("PRODUCTS_SERVICE", `Variante agregada a producto ${productId}`);
+    return data;
+  },
+
+  deleteProduct: async (id: string): Promise<void> => {
+    const { removeProduct, setError } = useProductsStore.getState();
+    try {
+      await apiClient.delete(`/products/${id}`);
+      removeProduct(id);
+      logger.info("PRODUCTS_SERVICE", `Producto eliminado: ${id}`);
+    } catch (error: unknown) {
+      const msg =
+        error instanceof AxiosError
+          ? error.response?.data?.message || "Error al eliminar el producto"
+          : "Error al eliminar el producto";
+      setError(msg);
+      logger.error("PRODUCTS_SERVICE", msg, error);
+      throw error;
+    }
   },
 
   uploadProductImages: async (

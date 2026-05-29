@@ -65,6 +65,27 @@ export interface CreateProductDto {
 
 export type CreateProductResponse = Product;
 
+// --- Update product DTO ---
+
+export interface UpdateProductDto {
+  name?: string;
+  description?: string;
+  categoryId?: string;
+  isActive?: boolean;
+}
+
+export type UpdateProductResponse = Product;
+
+// --- Add variant DTO ---
+
+export interface AddVariantDto {
+  price: number;
+  stock: number;
+  attributes?: Record<string, string>;
+}
+
+export type AddVariantResponse = ProductVariant;
+
 export interface ProductsResponse {
   total: number;
   products: Product[];
@@ -86,4 +107,5 @@ export interface ProductsState {
   setProducts: (products: Product[], total: number) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
+  removeProduct: (id: string) => void;
 }

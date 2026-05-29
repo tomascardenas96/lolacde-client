@@ -21,21 +21,21 @@ export default function Logo({
   return (
     <div
       className={`flex flex-col items-center transition-all duration-500 ease-in-out ${
-        size === "normal" ? "gap-0" : "gap-0"
+        size === "normal" ? "gap-0" : "gap-2"
       }`}
     >
       <span
         className={`${pinyonScript.className} ${pinyonScript.variable} font-bold transition-all duration-500 ease-in-out ${
-          size === "large" ? "text-[5rem]" : "text-[1.9rem]"
+          size === "large" ? "text-[4rem]" : "text-[1.9rem]"
         } ${color === "light" ? "text-white" : "text-[#3d3d3d]"}`}
       >
         Lola
       </span>
       {withSlogan && (
         <span
-          className={`transition-all duration-500 ease-in-out  ${
+          className={`transition-all duration-500 ease-in-out tracking-[0.25em] ${
             size === "large"
-              ? "text-[1.6rem] mt-[-1.6rem] font-thin"
+              ? "text-[1rem] mt-[-1.6rem] font-thin"
               : "text-[.6rem] mt-[-.3rem] font-light"
           } ${color === "dark" ? "text-[#3d3d3d]" : "text-accent"}`}
         >

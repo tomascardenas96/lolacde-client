@@ -18,7 +18,7 @@ export function Footer() {
       </div>
 
       {/* Info grid — asymmetric editorial layout */}
-      <div className="px-6 md:px-20 lg:px-24 border-t border-white/5">
+      <div className="px-6 md:px-24 lg:px-32 border-t border-white/5">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
           {/* Navigation */}
           <div className="py-12 pr-8 border-b lg:border-b-0 lg:border-r border-white/5">

@@ -18,7 +18,7 @@ export function MembershipSection() {
   const whatsappUrl = `https://wa.me/542281576513?text=${encodeURIComponent(whatsappMessage)}`;
 
   return (
-    <section className="px-6 md:px-16 py-32 bg-background">
+    <section className="px-6 md:px-24 py-32 bg-background">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center max-w-6xl mx-auto">
         {/* Card mockup */}
         <div className="relative flex items-center justify-center">

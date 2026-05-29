@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export function ServicesSection() {
   return (
-    <section id="services" className="px-6 md:px-16 py-24 bg-background">
+    <section id="services" className="px-6 md:px-24 py-24 bg-background">
       <div className="flex flex-col md:flex-row md:items-start md:justify-between mb-16 gap-8">
         <div className="max-w-xl">
           <h2 className="heading-display text-4xl md:text-6xl text-white mb-8">
