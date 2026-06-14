@@ -104,6 +104,12 @@ export interface ProductsResponse {
 export interface GetProductsParams {
   limit?: number;
   offset?: number;
+  search?: string;
+  categoryId?: string;
+}
+
+export interface GetAdminProductsParams extends GetProductsParams {
+  isActive?: boolean;
 }
 
 // --- Store state ---

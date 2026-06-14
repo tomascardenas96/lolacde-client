@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useLoginForm } from "../hooks/useLoginForm";
 import { Input } from "../ui/Input";
 
@@ -27,12 +28,12 @@ export const LoginForm = () => {
         placeholder="••••••••"
         error={errors.password?.message}
         trailing={
-          <button
-            type="button"
+          <Link
+            href="/forgot-password"
             className="text-[10px] tracking-[0.15em] text-muted hover:text-white transition-colors uppercase"
           >
             ¿Olvidáste tu contraseña?
-          </button>
+          </Link>
         }
         {...register("password")}
       />

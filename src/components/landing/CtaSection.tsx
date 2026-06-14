@@ -1,7 +1,11 @@
+import { Reveal } from "@/components/ui/Reveal";
+
 export function CtaSection() {
   return (
-    <section className="px-6 md:px-24 py-40 bg-background text-center">
-      <div className="max-w-6xl mx-auto">
+    <section className="relative px-6 md:px-24 py-40 bg-background text-center overflow-hidden">
+      {/* Soft champagne glow centered behind the call-to-action */}
+      <div className="glow-accent absolute inset-0 pointer-events-none" />
+      <Reveal className="relative max-w-6xl mx-auto">
         <div className="flex items-center justify-center gap-3 mb-6">
           <div className="w-12 h-px bg-accent/40" />
           <p className="text-[10px] tracking-[0.35em] text-accent uppercase">
@@ -21,7 +25,7 @@ export function CtaSection() {
         >
           ENVIAR WHATSAPP
         </a>
-      </div>
+      </Reveal>
     </section>
   );
 }

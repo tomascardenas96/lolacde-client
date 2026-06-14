@@ -1,4 +1,5 @@
 import { QuoteIcon } from "./Icons";
+import { Reveal } from "@/components/ui/Reveal";
 
 const testimonials = [
   {
@@ -27,17 +28,20 @@ const testimonials = [
 export function TestimonialsSection() {
   return (
     <section className="px-6 md:px-24 2xl:px-28 py-32 bg-background">
-      <p className="text-[10px] tracking-[0.35em] text-accent mb-4 uppercase">
-        Testimonios
-      </p>
-      <h2 className="heading-display text-4xl md:text-6xl text-white mb-16 max-w-3xl">
-        VOCES DE NUESTROS CLIENTES.
-      </h2>
+      <Reveal>
+        <p className="text-[10px] tracking-[0.35em] text-accent mb-4 uppercase">
+          Testimonios
+        </p>
+        <h2 className="heading-display text-4xl md:text-6xl text-white mb-16 max-w-3xl">
+          VOCES DE NUESTROS CLIENTES.
+        </h2>
+      </Reveal>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {testimonials.map((t) => (
-          <div
+        {testimonials.map((t, i) => (
+          <Reveal
             key={t.name}
+            delay={i * 120}
             className="bg-card rounded-sm p-8 flex flex-col justify-between min-h-[280px]"
           >
             <div className="flex justify-between items-start mb-6">
@@ -60,7 +64,7 @@ export function TestimonialsSection() {
                 </p>
               </div>
             </div>
-          </div>
+          </Reveal>
         ))}
       </div>
     </section>

@@ -16,15 +16,15 @@ import {
 import { useDashboardStore } from "../store/dashboardStore";
 
 const managementLinks = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/dashboard/inventory", label: "Inventory", icon: Package },
-  { href: "/dashboard/customers", label: "Customers", icon: Users },
-  { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/dashboard", label: "Resumen", icon: LayoutDashboard },
+  { href: "/dashboard/inventory", label: "Inventario", icon: Package },
+  { href: "/dashboard/customers", label: "Clientes", icon: Users },
+  { href: "/dashboard/analytics", label: "Analíticas", icon: BarChart3 },
 ];
 
 const operationsLinks = [
-  { href: "/dashboard/orders", label: "Orders", icon: ShoppingCart },
-  { href: "/dashboard/settings", label: "Settings", icon: Settings },
+  { href: "/dashboard/orders", label: "Órdenes", icon: ShoppingCart },
+  { href: "/dashboard/settings", label: "Configuración", icon: Settings },
 ];
 
 export const Sidebar = () => {
@@ -87,14 +87,14 @@ export const Sidebar = () => {
             className="flex items-center gap-2 text-muted hover:text-white text-xs tracking-[0.15em] uppercase transition-colors"
           >
             <ArrowLeft size={14} />
-            <span>Back to Store</span>
+            <span>Volver a la tienda</span>
           </Link>
         </div>
 
-        {/* Management */}
+        {/* Gestión */}
         <div className="mt-6 px-4 mb-2">
           <span className="text-[0.6rem] tracking-[0.2em] text-muted uppercase">
-            Management
+            Gestión
           </span>
         </div>
         <nav className="flex flex-col">
@@ -103,10 +103,10 @@ export const Sidebar = () => {
           ))}
         </nav>
 
-        {/* Operations */}
+        {/* Operaciones */}
         <div className="mt-6 px-4 mb-2">
           <span className="text-[0.6rem] tracking-[0.2em] text-muted uppercase">
-            Operations
+            Operaciones
           </span>
         </div>
         <nav className="flex flex-col">
@@ -115,14 +115,14 @@ export const Sidebar = () => {
           ))}
         </nav>
 
-        {/* System Health */}
+        {/* Estado del sistema */}
         <div className="mt-auto px-4 py-4 border-t border-white/5">
           <div className="text-[0.6rem] tracking-[0.15em] text-muted uppercase mb-1">
-            System Health
+            Estado del sistema
           </div>
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-success" />
-            <span className="text-xs text-success">Operational</span>
+            <span className="text-xs text-success">Operativo</span>
           </div>
         </div>
       </aside>

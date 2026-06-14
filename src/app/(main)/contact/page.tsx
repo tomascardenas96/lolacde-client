@@ -1,21 +1,45 @@
 "use client";
 
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { AxiosError } from "axios";
 import { MapPin, Phone, Mail, Clock, Send, ArrowUpRight } from "lucide-react";
+import { useToast } from "@/components/ui/Toast";
+import { contactService } from "@/features/contact/services/contactService";
+import {
+  contactSchema,
+  type ContactFormValues,
+} from "@/features/contact/schemas/contact-schema";
 
 export default function ContactPage() {
-  const [formState, setFormState] = useState({
-    name: "",
-    email: "",
-    message: "",
-  });
+  const { showToast } = useToast();
   const [submitted, setSubmitted] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 3000);
-    setFormState({ name: "", email: "", message: "" });
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<ContactFormValues>({
+    resolver: zodResolver(contactSchema),
+    defaultValues: { name: "", email: "", phone: "", message: "" },
+  });
+
+  const onSubmit = async (values: ContactFormValues) => {
+    try {
+      await contactService.sendMessage(values);
+      setSubmitted(true);
+      showToast("Mensaje enviado correctamente");
+      reset();
+      setTimeout(() => setSubmitted(false), 3000);
+    } catch (error: unknown) {
+      const msg =
+        error instanceof AxiosError
+          ? error.response?.data?.message || "No se pudo enviar el mensaje"
+          : "No se pudo enviar el mensaje";
+      showToast(msg);
+    }
   };
 
   return (
@@ -116,7 +140,7 @@ export default function ContactPage() {
               <Send className="w-5 h-5 text-muted/30 mt-2" />
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-8">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-8" noValidate>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="group">
                   <label className="block text-[0.6rem] tracking-[0.2em] text-muted uppercase mb-3 group-focus-within:text-white transition-colors">
@@ -124,14 +148,15 @@ export default function ContactPage() {
                   </label>
                   <input
                     type="text"
-                    required
-                    value={formState.name}
-                    onChange={(e) =>
-                      setFormState({ ...formState, name: e.target.value })
-                    }
+                    {...register("name")}
                     className="w-full bg-transparent border-b border-white/10 py-3 text-sm text-white outline-none focus:border-white/40 transition-colors placeholder:text-muted/20"
                     placeholder="Tu nombre"
                   />
+                  {errors.name && (
+                    <p className="text-red-400 text-xs mt-2">
+                      {errors.name.message}
+                    </p>
+                  )}
                 </div>
                 <div className="group">
                   <label className="block text-[0.6rem] tracking-[0.2em] text-muted uppercase mb-3 group-focus-within:text-white transition-colors">
@@ -139,15 +164,33 @@ export default function ContactPage() {
                   </label>
                   <input
                     type="email"
-                    required
-                    value={formState.email}
-                    onChange={(e) =>
-                      setFormState({ ...formState, email: e.target.value })
-                    }
+                    {...register("email")}
                     className="w-full bg-transparent border-b border-white/10 py-3 text-sm text-white outline-none focus:border-white/40 transition-colors placeholder:text-muted/20"
                     placeholder="tu@email.com"
                   />
+                  {errors.email && (
+                    <p className="text-red-400 text-xs mt-2">
+                      {errors.email.message}
+                    </p>
+                  )}
                 </div>
+              </div>
+
+              <div className="group">
+                <label className="block text-[0.6rem] tracking-[0.2em] text-muted uppercase mb-3 group-focus-within:text-white transition-colors">
+                  Teléfono (opcional)
+                </label>
+                <input
+                  type="tel"
+                  {...register("phone")}
+                  className="w-full bg-transparent border-b border-white/10 py-3 text-sm text-white outline-none focus:border-white/40 transition-colors placeholder:text-muted/20"
+                  placeholder="+54 9 11 1234-5678"
+                />
+                {errors.phone && (
+                  <p className="text-red-400 text-xs mt-2">
+                    {errors.phone.message}
+                  </p>
+                )}
               </div>
 
               <div className="group">
@@ -155,26 +198,32 @@ export default function ContactPage() {
                   Mensaje
                 </label>
                 <textarea
-                  required
                   rows={3}
-                  value={formState.message}
-                  onChange={(e) =>
-                    setFormState({ ...formState, message: e.target.value })
-                  }
+                  {...register("message")}
                   className="w-full bg-transparent border-b border-white/10 py-3 text-sm text-white outline-none focus:border-white/40 transition-colors resize-none placeholder:text-muted/20"
                   placeholder="Contanos en qué podemos ayudarte..."
                 />
+                {errors.message && (
+                  <p className="text-red-400 text-xs mt-2">
+                    {errors.message.message}
+                  </p>
+                )}
               </div>
 
               <button
                 type="submit"
-                className={`group/btn flex items-center justify-center gap-3 w-full py-5 text-[0.65rem] tracking-[0.2em] uppercase font-semibold transition-all duration-500 cursor-pointer ${
+                disabled={isSubmitting}
+                className={`group/btn flex items-center justify-center gap-3 w-full py-5 text-[0.65rem] tracking-[0.2em] uppercase font-semibold transition-all duration-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
                   submitted
                     ? "bg-white/10 text-white border border-white/10"
                     : "bg-white text-black hover:bg-foreground"
                 }`}
               >
-                {submitted ? "Mensaje enviado correctamente" : "Enviar mensaje"}
+                {isSubmitting
+                  ? "Enviando..."
+                  : submitted
+                    ? "Mensaje enviado correctamente"
+                    : "Enviar mensaje"}
                 <ArrowUpRight
                   className={`w-4 h-4 transition-transform duration-300 ${
                     submitted

@@ -17,25 +17,25 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 const LIMIT = 10;
 
 const tabs: { label: string; value: AdminOrderStatus | "all" }[] = [
-  { label: "All", value: "all" },
-  { label: "Pending", value: "pending" },
-  { label: "Paid", value: "paid" },
-  { label: "Shipped", value: "shipped" },
-  { label: "Delivered", value: "delivered" },
-  { label: "Cancelled", value: "cancelled" },
+  { label: "Todas", value: "all" },
+  { label: "Pendientes", value: "pending" },
+  { label: "Pagadas", value: "paid" },
+  { label: "Enviadas", value: "shipped" },
+  { label: "Entregadas", value: "delivered" },
+  { label: "Canceladas", value: "cancelled" },
 ];
 
 const columns: Column<AdminOrder>[] = [
   {
     key: "orderNumber",
-    label: "Order",
+    label: "Orden",
     render: (item) => (
       <span className="font-medium text-white">{item.orderNumber}</span>
     ),
   },
   {
     key: "customer",
-    label: "Customer",
+    label: "Cliente",
     render: (item) => (
       <div>
         <div className="text-white/90">
@@ -47,7 +47,7 @@ const columns: Column<AdminOrder>[] = [
   },
   {
     key: "status",
-    label: "Status",
+    label: "Estado",
     render: (item) => <StatusBadge status={item.status} />,
   },
   {
@@ -55,15 +55,15 @@ const columns: Column<AdminOrder>[] = [
     label: "Total",
     render: (item) => (
       <span className="font-medium">
-        ${item.totalAmount.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+        ${item.totalAmount.toLocaleString("es-AR", { minimumFractionDigits: 2 })}
       </span>
     ),
   },
   {
     key: "createdAt",
-    label: "Date",
+    label: "Fecha",
     render: (item) =>
-      new Date(item.createdAt).toLocaleDateString("en-US", {
+      new Date(item.createdAt).toLocaleDateString("es-AR", {
         year: "numeric",
         month: "short",
         day: "numeric",
@@ -96,7 +96,7 @@ export default function OrdersPage() {
 
   return (
     <div className="max-w-[1400px]">
-      <DashboardHeader title="Orders" subtitle="Order Management" />
+      <DashboardHeader title="Órdenes" subtitle="Gestión de órdenes" />
 
       {/* Tabs */}
       <div className="flex gap-1 mb-6 overflow-x-auto">
@@ -130,7 +130,7 @@ export default function OrdersPage() {
           </div>
         ) : orders.length === 0 ? (
           <div className="text-center py-20 text-muted text-sm">
-            No orders found
+            No se encontraron órdenes
           </div>
         ) : (
           <DataTable
@@ -148,7 +148,7 @@ export default function OrdersPage() {
       {totalPages > 1 && (
         <div className="flex items-center justify-between mt-4 text-sm text-muted">
           <span>
-            Showing {offset + 1}–{Math.min(offset + LIMIT, total)} of {total}
+            Mostrando {offset + 1}–{Math.min(offset + LIMIT, total)} de {total}
           </span>
           <div className="flex items-center gap-2">
             <button

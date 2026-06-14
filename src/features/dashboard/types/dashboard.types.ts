@@ -91,3 +91,45 @@ export interface Column<T> {
   label: string;
   render?: (item: T) => React.ReactNode;
 }
+
+// --- Stats del backend (GET /orders/admin/stats) ---
+
+export interface DashboardStatsTopProduct {
+  productId: string;
+  name: string;
+  unitsSold: number;
+  revenue: number;
+}
+
+export interface DashboardStatsMonthlyPoint {
+  month: string; // 'YYYY-MM'
+  revenue: number;
+  orderCount: number;
+}
+
+export interface DashboardStats {
+  revenue: number;
+  orderCount: number;
+  averageOrderValue: number;
+  topProducts: DashboardStatsTopProduct[];
+  monthly: DashboardStatsMonthlyPoint[];
+}
+
+// --- Clientes del backend (GET /user) ---
+
+export interface ServerCustomer {
+  id: string;
+  name: string;
+  lastname: string | null;
+  email: string;
+  createdAt: string;
+  isEmailConfirmed: boolean;
+  roleName: string | null;
+  ordersCount: number;
+  totalSpent: number;
+}
+
+export interface CustomersResponse {
+  data: ServerCustomer[];
+  total: number;
+}

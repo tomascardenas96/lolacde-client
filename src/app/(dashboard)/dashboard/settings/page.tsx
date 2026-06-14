@@ -25,17 +25,17 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-[800px]">
-      <DashboardHeader title="Settings" subtitle="System Configuration" />
+      <DashboardHeader title="Configuración" subtitle="Configuración del sistema" />
 
-      {/* Profile */}
+      {/* Perfil */}
       <section className="bg-card p-6 rounded-sm mb-6">
         <h3 className="text-[0.65rem] tracking-[0.2em] text-muted uppercase mb-5">
-          Profile
+          Perfil
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-[0.6rem] tracking-[0.2em] text-muted uppercase mb-1.5">
-              Name
+              Nombre
             </label>
             <input
               type="text"
@@ -57,7 +57,7 @@ export default function SettingsPage() {
           </div>
           <div>
             <label className="block text-[0.6rem] tracking-[0.2em] text-muted uppercase mb-1.5">
-              Role
+              Rol
             </label>
             <input
               type="text"
@@ -72,12 +72,12 @@ export default function SettingsPage() {
       {/* Store */}
       <section className="bg-card p-6 rounded-sm mb-6">
         <h3 className="text-[0.65rem] tracking-[0.2em] text-muted uppercase mb-5">
-          Store Settings
+          Configuración de la tienda
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-[0.6rem] tracking-[0.2em] text-muted uppercase mb-1.5">
-              Store Name
+              Nombre de la tienda
             </label>
             <input
               type="text"
@@ -88,7 +88,7 @@ export default function SettingsPage() {
           </div>
           <div>
             <label className="block text-[0.6rem] tracking-[0.2em] text-muted uppercase mb-1.5">
-              Currency
+              Moneda
             </label>
             <select
               value={store.currency}
@@ -103,17 +103,17 @@ export default function SettingsPage() {
           </div>
           <div>
             <label className="block text-[0.6rem] tracking-[0.2em] text-muted uppercase mb-1.5">
-              Timezone
+              Zona horaria
             </label>
             <select
               value={store.timezone}
               onChange={(e) => setStore({ ...store, timezone: e.target.value })}
               className="w-full bg-card-light text-white text-sm px-4 py-2.5 rounded-sm outline-none appearance-none cursor-pointer"
             >
-              <option value="America/New_York">Eastern Time (ET)</option>
-              <option value="America/Chicago">Central Time (CT)</option>
-              <option value="America/Denver">Mountain Time (MT)</option>
-              <option value="America/Los_Angeles">Pacific Time (PT)</option>
+              <option value="America/New_York">Hora del Este (ET)</option>
+              <option value="America/Chicago">Hora Central (CT)</option>
+              <option value="America/Denver">Hora de la Montaña (MT)</option>
+              <option value="America/Los_Angeles">Hora del Pacífico (PT)</option>
               <option value="America/Argentina/Buenos_Aires">Argentina (ART)</option>
             </select>
           </div>
@@ -123,15 +123,15 @@ export default function SettingsPage() {
       {/* Notifications */}
       <section className="bg-card p-6 rounded-sm mb-6">
         <h3 className="text-[0.65rem] tracking-[0.2em] text-muted uppercase mb-5">
-          Notifications
+          Notificaciones
         </h3>
         <div className="flex flex-col gap-4">
           {(
             [
-              { key: "orderAlerts", label: "Order Alerts", desc: "Get notified for new orders" },
-              { key: "stockAlerts", label: "Stock Alerts", desc: "Low stock warnings" },
-              { key: "customerSignups", label: "Customer Signups", desc: "New customer registrations" },
-              { key: "weeklyReport", label: "Weekly Report", desc: "Summary every Monday" },
+              { key: "orderAlerts", label: "Alertas de órdenes", desc: "Recibí avisos de nuevas órdenes" },
+              { key: "stockAlerts", label: "Alertas de stock", desc: "Avisos de bajo stock" },
+              { key: "customerSignups", label: "Altas de clientes", desc: "Nuevos registros de clientes" },
+              { key: "weeklyReport", label: "Reporte semanal", desc: "Resumen todos los lunes" },
             ] as const
           ).map(({ key, label, desc }) => (
             <div key={key} className="flex items-center justify-between">
@@ -161,7 +161,7 @@ export default function SettingsPage() {
       {/* Save */}
       <div className="flex justify-end">
         <button className="px-6 py-2.5 bg-white text-black text-xs tracking-[0.15em] uppercase hover:bg-white/90 transition-colors rounded-sm">
-          Save Changes
+          Guardar cambios
         </button>
       </div>
     </div>

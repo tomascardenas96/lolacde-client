@@ -19,7 +19,6 @@ export const authService = {
         try {
             setChecking(true);
             const { data } = await apiClient.get<AuthResponse>("/auth/me");
-            console.log("[AUTH_SERVICE] getMe raw response:", JSON.stringify(data));
 
             if (data?.user) {
                 setAuth(data.user);
@@ -123,5 +122,53 @@ export const authService = {
         } finally {
             setChecking(false);
         }
-    }
+    },
+
+    /**
+     * Solicita el envío del correo de recuperación de contraseña.
+     */
+    forgotPassword: async (email: string): Promise<void> => {
+        await apiClient.post("/auth/forgot-password", { email });
+        logger.info("AUTH_SERVICE", "Solicitud de recuperación enviada");
+    },
+
+    /**
+     * Restablece la contraseña usando el token recibido por correo.
+     */
+    resetPassword: async (payload: {
+        token: string;
+        newPassword: string;
+        confirmPassword: string;
+    }): Promise<void> => {
+        await apiClient.post("/auth/reset-password", payload);
+        logger.info("AUTH_SERVICE", "Contraseña restablecida");
+    },
+
+    /**
+     * Confirma el correo electrónico a partir del token del link.
+     */
+    confirmEmail: async (token: string): Promise<void> => {
+        await apiClient.get("/auth/confirm", { params: { token } });
+        logger.info("AUTH_SERVICE", "Email confirmado");
+    },
+
+    /**
+     * Cambia la contraseña del usuario autenticado.
+     */
+    changePassword: async (payload: {
+        oldPassword: string;
+        newPassword: string;
+        confirmPassword: string;
+    }): Promise<void> => {
+        await apiClient.post("/auth/change-password", payload);
+        logger.info("AUTH_SERVICE", "Contraseña actualizada");
+    },
+
+    /**
+     * Reenvía el correo de confirmación de cuenta.
+     */
+    sendConfirmationMail: async (email: string): Promise<void> => {
+        await apiClient.post("/auth/send-confirmation-mail", { email });
+        logger.info("AUTH_SERVICE", "Correo de confirmación reenviado");
+    },
 };

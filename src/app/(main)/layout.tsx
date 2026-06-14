@@ -1,4 +1,5 @@
 import { AuthInitializer } from "@/features/auth/components/AuthInitializer";
+import { EmailConfirmationBanner } from "@/features/auth/components/EmailConfirmationBanner";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/landing/Footer";
 import { ToastProvider } from "@/components/ui/Toast";
@@ -14,6 +15,7 @@ export default function MainLayout({
         <Navbar />
         {children}
         <Footer />
+        <EmailConfirmationBanner />
       </AuthInitializer>
     </ToastProvider>
   );

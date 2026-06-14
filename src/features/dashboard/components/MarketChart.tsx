@@ -17,16 +17,16 @@ export const MarketChart = ({ data }: { data: MarketPerformance[] }) => {
     <div className="bg-card p-6 rounded-sm">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-[0.65rem] tracking-[0.2em] text-muted uppercase">
-          Market Performance
+          Rendimiento de ventas
         </h3>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-accent" />
-            <span className="text-xs text-muted">Sales</span>
+            <span className="text-xs text-muted">Ventas</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-card-light" />
-            <span className="text-xs text-muted">Projections</span>
+            <span className="text-xs text-muted">Proyección</span>
           </div>
         </div>
       </div>

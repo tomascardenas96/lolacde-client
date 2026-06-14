@@ -7,8 +7,8 @@ export default function NewProductPage() {
   return (
     <div className="max-w-[1400px]">
       <DashboardHeader
-        title="New Product"
-        subtitle="Inventory · Create"
+        title="Nuevo producto"
+        subtitle="Inventario · Crear"
       />
       <CreateProductForm />
     </div>

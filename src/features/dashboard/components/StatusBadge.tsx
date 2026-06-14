@@ -13,6 +13,22 @@ type StatusType =
   | "failed"
   | "refunded";
 
+const statusLabels: Record<StatusType, string> = {
+  active: "Activo",
+  inactive: "Inactivo",
+  draft: "Borrador",
+  archived: "Archivado",
+  pending: "Pendiente",
+  processing: "Procesando",
+  paid: "Pagada",
+  shipped: "Enviada",
+  delivered: "Entregada",
+  cancelled: "Cancelada",
+  completed: "Completada",
+  failed: "Fallida",
+  refunded: "Reembolsada",
+};
+
 const statusStyles: Record<StatusType, string> = {
   active: "bg-success/15 text-success",
   inactive: "bg-muted/15 text-muted",
@@ -36,7 +52,7 @@ export const StatusBadge = ({ status }: { status: StatusType }) => {
         statusStyles[status] || "bg-muted/15 text-muted"
       }`}
     >
-      {status}
+      {statusLabels[status] ?? status}
     </span>
   );
 };

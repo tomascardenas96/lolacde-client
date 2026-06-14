@@ -3,6 +3,8 @@
 import { MessageCircleWarningIcon } from "lucide-react";
 import { useState } from "react";
 import Logo from "../layout/Logo";
+import { Reveal } from "@/components/ui/Reveal";
+import { phone } from "@/lib/constants";
 
 const SERVICE_LABELS: Record<string, string> = {
   "1": "Servicio 1",
@@ -15,20 +17,21 @@ export function MembershipSection() {
   const [service, setService] = useState("");
 
   const whatsappMessage = `Hola! Soy ${name}, quiero reservar un turno para ${SERVICE_LABELS[service] ?? ""}.`;
-  const whatsappUrl = `https://wa.me/542281576513?text=${encodeURIComponent(whatsappMessage)}`;
+  const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(whatsappMessage)}`;
 
   return (
-    <section className="px-6 md:px-24 py-32 bg-background">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center max-w-6xl mx-auto">
+    <section className="px-6 md:px-24 py-32 bg-background relative">
+      <div id="booking" className="absolute -top-24 left-0 w-full" />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-24 items-center max-w-6xl mx-auto">
         {/* Card mockup */}
-        <div className="relative flex items-center justify-center">
+        <Reveal className="relative flex items-center justify-center">
           <div className="w-96 h-96 rounded-full bg-white border-3 border-accent grid items-center justify-center pb-6  ">
             <Logo color="dark" size="large" />
           </div>
-        </div>
+        </Reveal>
 
         {/* Content */}
-        <div>
+        <Reveal delay={120}>
           <p className="text-[10px] tracking-[0.35em] text-accent mb-4 uppercase">
             RESERVÁ UN TURNO
           </p>
@@ -106,7 +109,7 @@ export function MembershipSection() {
               </span>
             )}
           </form>
-        </div>
+        </Reveal>
       </div>
     </section>
   );

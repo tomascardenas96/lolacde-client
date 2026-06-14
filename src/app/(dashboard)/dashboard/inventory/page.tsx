@@ -38,8 +38,8 @@ const getPriceLabel = (product: Product): string => {
   if (prices.length === 0) return "$0";
   const min = Math.min(...prices);
   const max = Math.max(...prices);
-  if (min === max) return `$${min.toLocaleString("en-US")}`;
-  return `$${min.toLocaleString("en-US")} – $${max.toLocaleString("en-US")}`;
+  if (min === max) return `$${min.toLocaleString("es-AR")}`;
+  return `$${min.toLocaleString("es-AR")} – $${max.toLocaleString("es-AR")}`;
 };
 
 const getTotalStock = (product: Product): number =>
@@ -65,7 +65,11 @@ export default function InventoryPage() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
-    productsService.getProducts({ limit: PAGE_SIZE, offset: page * PAGE_SIZE });
+    // Inventario admin: incluye productos inactivos (archivados).
+    productsService.getAdminProducts({
+      limit: PAGE_SIZE,
+      offset: page * PAGE_SIZE,
+    });
   }, [page]);
 
   const categories = useMemo(
@@ -115,7 +119,7 @@ export default function InventoryPage() {
     () => [
       {
         key: "name",
-        label: "Product",
+        label: "Producto",
         render: (item) => {
           const image = getMainImage(item);
           return (
@@ -143,7 +147,7 @@ export default function InventoryPage() {
       },
       {
         key: "price",
-        label: "Price",
+        label: "Precio",
         render: (item) => getPriceLabel(item),
       },
       {
@@ -158,12 +162,12 @@ export default function InventoryPage() {
       },
       {
         key: "category",
-        label: "Category",
+        label: "Categoría",
         render: (item) => item.category?.name ?? "—",
       },
       {
         key: "status",
-        label: "Status",
+        label: "Estado",
         render: (item) => (
           <StatusBadge status={item.isActive ? "active" : "archived"} />
         ),
@@ -201,14 +205,14 @@ export default function InventoryPage() {
   return (
     <div className="max-w-[1400px]">
       <DashboardHeader
-        title="Inventory"
-        subtitle="Product Management"
+        title="Inventario"
+        subtitle="Gestión de productos"
         actions={
           <Link
             href="/dashboard/inventory/new"
             className="px-5 py-2.5 bg-white text-black text-xs tracking-[0.15em] uppercase hover:bg-white/90 transition-colors rounded-sm"
           >
-            Add Product
+            Agregar producto
           </Link>
         }
       />
@@ -222,7 +226,7 @@ export default function InventoryPage() {
           />
           <input
             type="text"
-            placeholder="Search products..."
+            placeholder="Buscar productos..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full bg-card text-white text-sm pl-10 pr-4 py-2.5 rounded-sm outline-none placeholder:text-muted/60 focus:ring-1 focus:ring-white/20"
@@ -235,7 +239,7 @@ export default function InventoryPage() {
         >
           {categories.map((cat) => (
             <option key={cat} value={cat}>
-              {cat === "all" ? "All Categories" : cat}
+              {cat === "all" ? "Todas las categorías" : cat}
             </option>
           ))}
         </select>
@@ -251,7 +255,7 @@ export default function InventoryPage() {
           <div className="py-16 text-center text-sm text-danger">{error}</div>
         ) : filtered.length === 0 ? (
           <div className="py-16 text-center text-sm text-muted">
-            No products found
+            No se encontraron productos
           </div>
         ) : (
           <DataTable
@@ -302,7 +306,7 @@ export default function InventoryPage() {
                             <span className="text-white/80">
                               $
                               {parsePrice(variant.price).toLocaleString(
-                                "en-US",
+                                "es-AR",
                               )}
                             </span>
                             <span
@@ -332,7 +336,7 @@ export default function InventoryPage() {
       {total > PAGE_SIZE && (
         <div className="flex items-center justify-between mt-4 px-1">
           <p className="text-[0.65rem] tracking-[0.15em] text-muted uppercase">
-            Showing {showingFrom}–{showingTo} of {total}
+            Mostrando {showingFrom}–{showingTo} de {total}
           </p>
           <div className="flex items-center gap-2">
             <button

@@ -1,5 +1,6 @@
 import { ScissorsIcon, SparklesIcon } from "./Icons";
 import Link from "next/link";
+import { Reveal } from "@/components/ui/Reveal";
 
 export function ServicesSection() {
   return (
@@ -8,7 +9,7 @@ export function ServicesSection() {
       className="px-6 md:px-24 2xl:px-28 py-24 bg-background"
     >
       <div className="flex flex-col md:flex-row md:items-start md:justify-between mb-16 gap-8">
-        <div className="max-w-xl">
+        <Reveal className="max-w-xl">
           <h2 className="heading-display text-4xl md:text-6xl text-white mb-8">
             Servicios que ofrecemos para cuidar tu belleza
           </h2>
@@ -17,13 +18,13 @@ export function ServicesSection() {
             necesidades de belleza. Desde cortes de pelo hasta tratamientos
             faciales, tenemos todo lo que necesitas para lucir radiante.
           </p>
-        </div>
+        </Reveal>
         <p className="text-xs tracking-[0.3em] text-accent self-start md:self-end">
           <Link href="/services">VER SERVICIOS</Link>
         </p>
       </div>
       {/* Two large service cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+      <Reveal className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <div className="relative h-[350px] overflow-hidden rounded-sm group cursor-pointer">
           <div
             className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
@@ -61,10 +62,10 @@ export function ServicesSection() {
             </h3>
           </div>
         </div>
-      </div>
+      </Reveal>
 
       {/* Three smaller service cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+      <Reveal className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
         <div className="bg-card-light rounded-sm p-8 flex flex-col gap-4">
           <ScissorsIcon />
           <h4 className="text-lg font-bold text-white uppercase tracking-tight">
@@ -102,9 +103,9 @@ export function ServicesSection() {
             Restorative rituals for structural integrity.
           </p>
         </div>
-      </div>
+      </Reveal>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+      <Reveal className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <div className="relative h-[350px] overflow-hidden rounded-sm group cursor-pointer">
           <div
             className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
@@ -140,7 +141,7 @@ export function ServicesSection() {
             </h3>
           </div>
         </div>
-      </div>
+      </Reveal>
     </section>
   );
 }

@@ -21,7 +21,7 @@ export default function Logo({
   return (
     <div
       className={`flex flex-col items-center transition-all duration-500 ease-in-out ${
-        size === "normal" ? "gap-0" : "gap-2"
+        size === "normal" ? "gap-0" : "gap-1"
       }`}
     >
       <span
@@ -33,10 +33,10 @@ export default function Logo({
       </span>
       {withSlogan && (
         <span
-          className={`transition-all duration-500 ease-in-out tracking-[0.25em] ${
+          className={`transition-all duration-500 ease-in-out tracking-[-0.001em] ${
             size === "large"
               ? "text-[1rem] mt-[-1.6rem] font-thin"
-              : "text-[.6rem] mt-[-.3rem] font-light"
+              : "text-[.7rem] mt-[-.3rem] font-light"
           } ${color === "dark" ? "text-[#3d3d3d]" : "text-accent"}`}
         >
           CENTRO DE ESTÉTICA

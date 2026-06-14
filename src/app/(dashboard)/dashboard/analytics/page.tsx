@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import {
   LineChart,
   Line,
@@ -13,48 +14,46 @@ import {
 } from "recharts";
 import { DashboardHeader } from "@/features/dashboard/components/DashboardHeader";
 import { StatCard } from "@/features/dashboard/components/StatCard";
+import { useDashboardStats } from "@/features/dashboard/hooks/useDashboardStats";
 import {
-  analyticsOverview,
-  revenueTimeline,
-  topProducts,
-} from "@/features/dashboard/data/analytics.data";
+  statsToRevenueTimeline,
+  statsToTopProducts,
+} from "@/features/dashboard/lib/statsMappers";
 
 export default function AnalyticsPage() {
-  const overview = analyticsOverview;
+  const { stats, customerCount } = useDashboardStats();
+
+  const revenueTimeline = useMemo(
+    () => (stats ? statsToRevenueTimeline(stats) : []),
+    [stats],
+  );
+  const topProducts = useMemo(
+    () => (stats ? statsToTopProducts(stats) : []),
+    [stats],
+  );
+
+  const totalRevenue = stats?.revenue ?? 0;
+  const orderCount = stats?.orderCount ?? 0;
+  const aov = stats?.averageOrderValue ?? 0;
 
   return (
     <div className="max-w-[1400px]">
-      <DashboardHeader title="Analytics" subtitle="Performance Insights" />
+      <DashboardHeader title="Analíticas" subtitle="Indicadores de rendimiento" />
 
       {/* Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
         <StatCard
-          label="Conversion Rate"
-          value={`${overview.conversionRate}%`}
-          trend={{
-            value: `${Math.abs(overview.conversionTrend)}%`,
-            direction: overview.conversionTrend >= 0 ? "up" : "down",
-          }}
+          label="Ingresos totales"
+          value={`$${totalRevenue.toLocaleString("es-AR")}`}
         />
         <StatCard
-          label="Avg. Session"
-          value={overview.avgSessionDuration}
+          label="Órdenes pagadas"
+          value={orderCount.toLocaleString("es-AR")}
         />
+        <StatCard label="Ticket promedio" value={`$${aov.toFixed(2)}`} />
         <StatCard
-          label="Bounce Rate"
-          value={`${overview.bounceRate}%`}
-          trend={{
-            value: `${Math.abs(overview.bounceTrend)}%`,
-            direction: overview.bounceTrend <= 0 ? "up" : "down",
-          }}
-        />
-        <StatCard
-          label="Total Visitors"
-          value={overview.totalVisitors.toLocaleString("en-US")}
-          trend={{
-            value: `${overview.visitorsTrend}%`,
-            direction: "up",
-          }}
+          label="Clientes"
+          value={customerCount.toLocaleString("es-AR")}
         />
       </div>
 
@@ -62,16 +61,16 @@ export default function AnalyticsPage() {
       <div className="bg-card p-6 rounded-sm mb-8">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-[0.65rem] tracking-[0.2em] text-muted uppercase">
-            Revenue Over Time
+            Ingresos por mes
           </h3>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-full bg-accent" />
-              <span className="text-xs text-muted">This Year</span>
+              <span className="text-xs text-muted">Este año</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-full bg-muted" />
-              <span className="text-xs text-muted">Last Year</span>
+              <span className="text-xs text-muted">Año anterior</span>
             </div>
           </div>
         </div>
@@ -104,7 +103,7 @@ export default function AnalyticsPage() {
                   color: "#ededed",
                   fontSize: "12px",
                 }}
-                formatter={(value) => [`$${Number(value).toLocaleString()}`, ""]}
+                formatter={(value) => [`$${Number(value).toLocaleString("es-AR")}`, ""]}
               />
               <Line
                 type="monotone"
@@ -126,52 +125,57 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      {/* Top Products */}
+      {/* Top SKUs */}
       <div className="bg-card p-6 rounded-sm">
         <h3 className="text-[0.65rem] tracking-[0.2em] text-muted uppercase mb-6">
-          Top Products by Revenue
+          Top SKUs por ingresos
         </h3>
-        <div className="h-64">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={topProducts} layout="vertical" barSize={16}>
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke="rgba(255,255,255,0.05)"
-                horizontal={false}
-              />
-              <XAxis
-                type="number"
-                tick={{ fill: "#888888", fontSize: 11 }}
-                axisLine={false}
-                tickLine={false}
-                tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
-              />
-              <YAxis
-                type="category"
-                dataKey="name"
-                tick={{ fill: "#888888", fontSize: 11 }}
-                axisLine={false}
-                tickLine={false}
-                width={140}
-              />
-              <Tooltip
-                contentStyle={{
-                  background: "#1a1a1a",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  borderRadius: "4px",
-                  color: "#ededed",
-                  fontSize: "12px",
-                }}
-                formatter={(value) => [`$${Number(value).toLocaleString()}`, "Revenue"]}
-              />
-              <Bar
-                dataKey="revenue"
-                fill="#c8a97e"
-                radius={[0, 2, 2, 0]}
-              />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+        {topProducts.length === 0 ? (
+          <p className="text-xs text-muted tracking-[0.1em] uppercase py-10 text-center">
+            Sin datos de ventas todavía
+          </p>
+        ) : (
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={topProducts} layout="vertical" barSize={16}>
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="rgba(255,255,255,0.05)"
+                  horizontal={false}
+                />
+                <XAxis
+                  type="number"
+                  tick={{ fill: "#888888", fontSize: 11 }}
+                  axisLine={false}
+                  tickLine={false}
+                  tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
+                />
+                <YAxis
+                  type="category"
+                  dataKey="name"
+                  tick={{ fill: "#888888", fontSize: 11 }}
+                  axisLine={false}
+                  tickLine={false}
+                  width={140}
+                />
+                <Tooltip
+                  contentStyle={{
+                    background: "#1a1a1a",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    borderRadius: "4px",
+                    color: "#ededed",
+                    fontSize: "12px",
+                  }}
+                  formatter={(value) => [
+                    `$${Number(value).toLocaleString("es-AR")}`,
+                    "Ingresos",
+                  ]}
+                />
+                <Bar dataKey="revenue" fill="#c8a97e" radius={[0, 2, 2, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
       </div>
     </div>
   );

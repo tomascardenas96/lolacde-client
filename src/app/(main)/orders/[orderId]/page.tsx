@@ -132,8 +132,23 @@ function OrderDetailContent() {
     }
   };
 
-  const total =
+  const itemsSubtotal =
     order?.items.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0) ?? 0;
+  const subtotal =
+    order?.subtotalAmount != null
+      ? Number(order.subtotalAmount)
+      : itemsSubtotal;
+  const shipping =
+    order?.shippingAmount != null ? Number(order.shippingAmount) : 0;
+  const discount =
+    order?.discountAmount != null ? Number(order.discountAmount) : 0;
+  const total =
+    order?.totalAmount != null
+      ? Number(order.totalAmount)
+      : Math.max(0, subtotal + shipping - discount);
+
+  const fmt = (n: number) =>
+    n.toLocaleString("en-US", { minimumFractionDigits: 2 });
 
   return (
     <main className="min-h-screen bg-background pt-28 pb-20">
@@ -231,17 +246,44 @@ function OrderDetailContent() {
 
             {/* Order Info Sidebar */}
             <div className="w-full lg:w-80 shrink-0 space-y-6">
-              {/* Total */}
+              {/* Total + desglose */}
               <div className="bg-card p-8">
                 <h2 className="text-[0.7rem] tracking-[0.25em] text-white uppercase font-semibold mb-6">
-                  Total
+                  Resumen
                 </h2>
-                <span className="text-2xl md:text-3xl text-white font-light">
-                  $
-                  {total.toLocaleString("en-US", {
-                    minimumFractionDigits: 2,
-                  })}
-                </span>
+                <div className="space-y-3 mb-5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-muted uppercase tracking-[0.1em]">
+                      Subtotal
+                    </span>
+                    <span className="text-xs text-white">${fmt(subtotal)}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-muted uppercase tracking-[0.1em]">
+                      Envío
+                    </span>
+                    <span className="text-xs text-white">${fmt(shipping)}</span>
+                  </div>
+                  {discount > 0 && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted uppercase tracking-[0.1em]">
+                        Descuento
+                        {order.discount?.code ? ` (${order.discount.code})` : ""}
+                      </span>
+                      <span className="text-xs text-accent">
+                        −${fmt(discount)}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                <div className="border-t border-white/10 pt-4 flex items-center justify-between">
+                  <span className="text-[0.7rem] tracking-[0.2em] text-muted uppercase">
+                    Total
+                  </span>
+                  <span className="text-2xl md:text-3xl text-white font-light">
+                    ${fmt(total)}
+                  </span>
+                </div>
               </div>
 
               {/* Shipping Info */}

@@ -20,9 +20,9 @@ export default function EditProductPage({
         className="inline-flex items-center gap-2 text-[0.65rem] tracking-[0.2em] text-muted hover:text-white uppercase transition-colors mb-4"
       >
         <ArrowLeft size={14} />
-        Inventory
+        Inventario
       </Link>
-      <DashboardHeader title="Edit Product" subtitle="Inventory · Update" />
+      <DashboardHeader title="Editar producto" subtitle="Inventario · Actualizar" />
       <EditProductForm productId={id} />
     </div>
   );

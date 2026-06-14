@@ -7,32 +7,30 @@ import { useCartStore } from "@/features/cart/store/cartStore";
 import { cartService } from "@/features/cart/services/cartService";
 import { ordersService } from "@/features/orders/services/ordersService";
 import { useAuthStore } from "@/features/auth/store/authStore";
+import { useAddressesStore } from "@/features/addresses/store/addressesStore";
+import { addressesService } from "@/features/addresses/services/addressesService";
+import { shippingService } from "@/features/shipping/services/shippingService";
+import { discountService } from "@/features/discount/services/discountService";
+import type { ShippingMethod } from "@/features/shipping/types/state.types";
+import type { DiscountValidation } from "@/features/discount/types/state.types";
 import { useToast } from "@/components/ui/Toast";
-import { apiClient } from "@/lib/api-client";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { AxiosError } from "axios";
+import { ArrowLeft, Loader2, Tag, X } from "lucide-react";
 
-interface Address {
-  id: string;
-  street: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  country: string;
-}
+const formatMoney = (n: number) =>
+  n.toLocaleString("en-US", { minimumFractionDigits: 2 });
 
-const PAYMENT_PROVIDERS = [
-  { id: "mercadopago", label: "MercadoPago" },
-  { id: "stripe", label: "Stripe" },
-  { id: "paypal", label: "PayPal" },
-];
+// Único proveedor habilitado. Para sumar otro (Stripe, PayPal, etc.) basta con
+// registrarlo en el backend (token PAYMENT_PROVIDERS) y agregarlo a esta lista.
+const PAYMENT_PROVIDERS = [{ id: "mercadopago", label: "MercadoPago" }];
 
 export default function CheckoutPage() {
   const router = useRouter();
   const cart = useCartStore((s) => s.cart);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const addresses = useAddressesStore((s) => s.addresses);
   const { showToast } = useToast();
 
-  const [addresses, setAddresses] = useState<Address[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState("");
   const [receiverName, setReceiverName] = useState("");
   const [phone, setPhone] = useState("");
@@ -41,26 +39,81 @@ export default function CheckoutPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Envío
+  const [shippingMethods, setShippingMethods] = useState<ShippingMethod[]>([]);
+  const [selectedShippingId, setSelectedShippingId] = useState<string>("");
+
+  // Cupón
+  const [couponInput, setCouponInput] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<DiscountValidation | null>(
+    null,
+  );
+  const [couponError, setCouponError] = useState<string | null>(null);
+  const [isValidatingCoupon, setIsValidatingCoupon] = useState(false);
+
   useEffect(() => {
     if (isAuthenticated) {
       cartService.getCart();
-      apiClient
-        .get<Address[]>("/addresses")
-        .then(({ data }) => {
-          setAddresses(data);
-          if (data.length > 0) setSelectedAddressId(data[0].id);
-        })
-        .catch(() => {
-          // Las direcciones no son criticas para cargar la pagina
-        });
+      addressesService.getAddresses();
+      shippingService
+        .getShippingMethods()
+        .then(setShippingMethods)
+        .catch(() => setShippingMethods([]));
     }
   }, [isAuthenticated]);
 
   const items = cart?.items ?? [];
   const subtotal = items.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0);
 
+  const selectedShipping = shippingMethods.find(
+    (m) => m.id === selectedShippingId,
+  );
+  const shippingCost = selectedShipping ? Number(selectedShipping.price) : 0;
+  const discountAmount = appliedCoupon?.discountAmount ?? 0;
+  const total = Math.max(0, subtotal + shippingCost - discountAmount);
+
+  const handleApplyCoupon = async () => {
+    const code = couponInput.trim();
+    if (!code) return;
+    setIsValidatingCoupon(true);
+    setCouponError(null);
+    try {
+      const result = await discountService.validateCoupon(code, subtotal);
+      setAppliedCoupon(result);
+      showToast("Cupón aplicado");
+    } catch (err: unknown) {
+      const msg =
+        err instanceof AxiosError
+          ? err.response?.data?.message || "Cupón inválido"
+          : "Cupón inválido";
+      setCouponError(msg);
+      setAppliedCoupon(null);
+    } finally {
+      setIsValidatingCoupon(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponInput("");
+    setCouponError(null);
+  };
+
+  // Dirección efectiva: la elegida por el usuario si sigue siendo válida; si no,
+  // la predeterminada (o la primera). Derivado para no sincronizar vía efecto.
+  const effectiveAddressId =
+    selectedAddressId && addresses.some((a) => a.id === selectedAddressId)
+      ? selectedAddressId
+      : (addresses.find((a) => a.isDefault) ?? addresses[0])?.id ?? "";
+
+  // Si hay métodos de envío disponibles, exigimos que se elija uno.
+  const requiresShipping = shippingMethods.length > 0;
   const canSubmit =
-    selectedAddressId && receiverName.trim() && phone.trim() && !isSubmitting;
+    effectiveAddressId &&
+    receiverName.trim() &&
+    phone.trim() &&
+    (!requiresShipping || !!selectedShippingId) &&
+    !isSubmitting;
 
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,10 +124,12 @@ export default function CheckoutPage() {
 
     try {
       const order = await ordersService.checkout({
-        addressId: selectedAddressId,
+        addressId: effectiveAddressId,
         receiverName: receiverName.trim(),
         phone: phone.trim(),
         additionalInfo: additionalInfo.trim() || undefined,
+        shippingMethodId: selectedShippingId || undefined,
+        discountCode: appliedCoupon?.code,
       });
 
       // Iniciar pago
@@ -166,7 +221,7 @@ export default function CheckoutPage() {
                       <label
                         key={addr.id}
                         className={`block border p-5 cursor-pointer transition-colors ${
-                          selectedAddressId === addr.id
+                          effectiveAddressId === addr.id
                             ? "border-white/40 bg-card"
                             : "border-white/10 hover:border-white/20"
                         }`}
@@ -175,22 +230,34 @@ export default function CheckoutPage() {
                           type="radio"
                           name="address"
                           value={addr.id}
-                          checked={selectedAddressId === addr.id}
+                          checked={effectiveAddressId === addr.id}
                           onChange={() => setSelectedAddressId(addr.id)}
                           className="sr-only"
                         />
-                        <p className="text-sm text-white">{addr.street}</p>
+                        <p className="text-sm text-white">
+                          {addr.addressLine}
+                        </p>
                         <p className="text-xs text-muted mt-1">
-                          {addr.city}, {addr.state} {addr.zipCode} -{" "}
+                          {addr.city}, {addr.state}
+                          {addr.zipCode ? ` ${addr.zipCode}` : ""} -{" "}
                           {addr.country}
                         </p>
                       </label>
                     ))}
+                    <Link
+                      href="/addresses"
+                      className="inline-block text-[0.6rem] tracking-[0.15em] uppercase text-muted hover:text-white transition-colors mt-2"
+                    >
+                      Gestionar direcciones
+                    </Link>
                   </div>
                 ) : (
-                  <p className="text-xs text-muted tracking-widest uppercase">
-                    No tienes direcciones guardadas. Agrega una desde tu perfil.
-                  </p>
+                  <Link
+                    href="/addresses"
+                    className="inline-block border border-white/20 px-6 py-3 text-[0.6rem] tracking-[0.15em] text-white uppercase hover:bg-white hover:text-black transition-all"
+                  >
+                    Agregar una dirección
+                  </Link>
                 )}
               </div>
 
@@ -240,6 +307,47 @@ export default function CheckoutPage() {
                   </div>
                 </div>
               </div>
+
+              {/* Shipping Method */}
+              {shippingMethods.length > 0 && (
+                <div>
+                  <h2 className="text-[0.7rem] tracking-[0.25em] text-white uppercase font-semibold mb-6">
+                    Metodo de envio
+                  </h2>
+                  <div className="space-y-3">
+                    {shippingMethods.map((method) => (
+                      <label
+                        key={method.id}
+                        className={`flex items-center justify-between border p-5 cursor-pointer transition-colors ${
+                          selectedShippingId === method.id
+                            ? "border-white/40 bg-card"
+                            : "border-white/10 hover:border-white/20"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="radio"
+                            name="shipping"
+                            value={method.id}
+                            checked={selectedShippingId === method.id}
+                            onChange={() => setSelectedShippingId(method.id)}
+                            className="sr-only"
+                          />
+                          <div>
+                            <p className="text-sm text-white">{method.name}</p>
+                            <p className="text-xs text-muted mt-1">
+                              {method.estimatedDays}
+                            </p>
+                          </div>
+                        </div>
+                        <span className="text-sm text-white">
+                          ${formatMoney(Number(method.price))}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Payment Provider */}
               <div>
@@ -306,15 +414,89 @@ export default function CheckoutPage() {
 
                 <div className="border-t border-white/10 my-6" />
 
+                {/* Coupon */}
+                <div className="mb-6">
+                  {appliedCoupon ? (
+                    <div className="flex items-center justify-between bg-background/40 border border-white/10 px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <Tag className="w-3.5 h-3.5 text-accent" />
+                        <span className="text-xs text-white uppercase tracking-[0.1em]">
+                          {appliedCoupon.code}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleRemoveCoupon}
+                        aria-label="Quitar cupón"
+                        className="text-muted hover:text-white transition-colors cursor-pointer"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={couponInput}
+                        onChange={(e) => setCouponInput(e.target.value)}
+                        placeholder="Código de cupón"
+                        className="flex-1 min-w-0 bg-transparent border border-white/10 px-3 py-2.5 text-xs text-white outline-none focus:border-white/40 transition-colors placeholder:text-muted/30 uppercase tracking-[0.1em]"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleApplyCoupon}
+                        disabled={isValidatingCoupon || !couponInput.trim()}
+                        className="shrink-0 border border-white/20 px-4 text-[0.6rem] tracking-[0.15em] uppercase text-white hover:bg-white hover:text-black transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        {isValidatingCoupon ? "..." : "Aplicar"}
+                      </button>
+                    </div>
+                  )}
+                  {couponError && (
+                    <p className="text-red-400 text-[0.65rem] mt-2">
+                      {couponError}
+                    </p>
+                  )}
+                </div>
+
+                {/* Breakdown */}
+                <div className="space-y-3 mb-6">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-muted uppercase tracking-[0.1em]">
+                      Subtotal
+                    </span>
+                    <span className="text-xs text-white">
+                      ${formatMoney(subtotal)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-muted uppercase tracking-[0.1em]">
+                      Envío
+                    </span>
+                    <span className="text-xs text-white">
+                      {selectedShipping ? `$${formatMoney(shippingCost)}` : "—"}
+                    </span>
+                  </div>
+                  {discountAmount > 0 && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted uppercase tracking-[0.1em]">
+                        Descuento
+                      </span>
+                      <span className="text-xs text-accent">
+                        −${formatMoney(discountAmount)}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="border-t border-white/10 my-6" />
+
                 <div className="flex items-center justify-between mb-8">
                   <span className="text-[0.7rem] tracking-[0.25em] text-muted uppercase">
                     Total
                   </span>
                   <span className="text-2xl md:text-3xl text-white font-light">
-                    $
-                    {subtotal.toLocaleString("en-US", {
-                      minimumFractionDigits: 2,
-                    })}
+                    ${formatMoney(total)}
                   </span>
                 </div>
 

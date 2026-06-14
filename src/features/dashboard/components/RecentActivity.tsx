@@ -11,7 +11,7 @@ export const RecentActivity = ({ items }: { items: RecentActivityItem[] }) => {
   return (
     <div className="bg-card p-6 rounded-sm h-full">
       <h3 className="text-[0.65rem] tracking-[0.2em] text-muted uppercase mb-6">
-        Recent Activity
+        Actividad reciente
       </h3>
       <div className="flex flex-col gap-5">
         {items.map((item) => (

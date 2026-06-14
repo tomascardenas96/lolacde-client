@@ -4,10 +4,14 @@ import { useAuthStore } from "@/features/auth/store/authStore";
 import { authService } from "@/features/auth/services/authService";
 import { useCartStore } from "@/features/cart/store/cartStore";
 import { cartService } from "@/features/cart/services/cartService";
+import { useFavoritesStore } from "@/features/favorites/store/favoritesStore";
+import { favoritesService } from "@/features/favorites/services/favoritesService";
 import {
   ChevronRight,
+  Heart,
   LayoutDashboard,
   LogOut,
+  MapPin,
   Package,
   ShoppingBag,
   User,
@@ -33,6 +37,7 @@ export function Navbar() {
   const isAdmin = user?.role?.name?.toUpperCase() === "ADMIN";
   const cart = useCartStore((s) => s.cart);
   const cartCount = cart?.items.reduce((sum, i) => sum + i.quantity, 0) ?? 0;
+  const favoritesCount = useFavoritesStore((s) => s.ids.length);
   const [isFixed, setIsFixed] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [hydrated, setHydrated] = useState(false);
@@ -53,6 +58,7 @@ export function Navbar() {
   useEffect(() => {
     if (hydrated && isAuthenticated) {
       cartService.getCart();
+      favoritesService.getFavorites();
     }
   }, [hydrated, isAuthenticated]);
 
@@ -114,6 +120,21 @@ export function Navbar() {
       </ul>
 
       <div className="flex items-center gap-7">
+        {hydrated && isAuthenticated && (
+          <Link
+            href="/favorites"
+            className="relative text-white hover:text-muted transition-colors"
+            aria-label="Mis favoritos"
+          >
+            <Heart className="w-5 h-5" />
+            {favoritesCount > 0 && (
+              <span className="absolute -top-2 -right-2 bg-accent text-black text-[0.55rem] font-semibold w-4 h-4 flex items-center justify-center">
+                {favoritesCount}
+              </span>
+            )}
+          </Link>
+        )}
+
         <Link
           href="/cart"
           className="relative text-white hover:text-muted transition-colors"
@@ -166,12 +187,36 @@ export function Navbar() {
                     </Link>
                   )}
                   <Link
+                    href="/account"
+                    onClick={() => setMenuOpen(false)}
+                    className="flex items-center gap-2 px-4 py-2 text-xs text-neutral-300 hover:bg-white/10 hover:text-white transition-colors"
+                  >
+                    <User className="w-3.5 h-3.5" />
+                    Mi cuenta
+                  </Link>
+                  <Link
                     href="/orders"
                     onClick={() => setMenuOpen(false)}
                     className="flex items-center gap-2 px-4 py-2 text-xs text-neutral-300 hover:bg-white/10 hover:text-white transition-colors"
                   >
                     <Package className="w-3.5 h-3.5" />
                     Mis pedidos
+                  </Link>
+                  <Link
+                    href="/favorites"
+                    onClick={() => setMenuOpen(false)}
+                    className="flex items-center gap-2 px-4 py-2 text-xs text-neutral-300 hover:bg-white/10 hover:text-white transition-colors"
+                  >
+                    <Heart className="w-3.5 h-3.5" />
+                    Mis favoritos
+                  </Link>
+                  <Link
+                    href="/addresses"
+                    onClick={() => setMenuOpen(false)}
+                    className="flex items-center gap-2 px-4 py-2 text-xs text-neutral-300 hover:bg-white/10 hover:text-white transition-colors"
+                  >
+                    <MapPin className="w-3.5 h-3.5" />
+                    Mis direcciones
                   </Link>
                   <button
                     onClick={handleLogout}

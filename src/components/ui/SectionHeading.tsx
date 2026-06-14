@@ -2,7 +2,7 @@ import { HTMLAttributes, ReactNode } from "react";
 import { cn } from "./cn";
 import { Eyebrow } from "./Eyebrow";
 
-interface Props extends HTMLAttributes<HTMLDivElement> {
+interface Props extends Omit<HTMLAttributes<HTMLDivElement>, "title"> {
   eyebrow?: string;
   title: ReactNode;
   description?: ReactNode;

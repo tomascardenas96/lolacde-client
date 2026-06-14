@@ -12,6 +12,14 @@ import {
   type AdminOrderStatus,
 } from "@/features/admin-orders/types/state.types";
 
+const STATUS_LABELS: Record<AdminOrderStatus, string> = {
+  pending: "pendiente",
+  paid: "pagada",
+  shipped: "enviada",
+  delivered: "entregada",
+  cancelled: "cancelada",
+};
+
 export default function OrderDetailPage() {
   const { orderId } = useParams<{ orderId: string }>();
   const router = useRouter();
@@ -30,7 +38,7 @@ export default function OrderDetailPage() {
     try {
       await adminOrdersService.updateStatus(order.id, newStatus);
     } catch {
-      setStatusError("Failed to update status");
+      setStatusError("No se pudo actualizar el estado");
     }
   };
 
@@ -50,10 +58,10 @@ export default function OrderDetailPage() {
           className="flex items-center gap-2 text-muted hover:text-white text-xs tracking-[0.15em] uppercase transition-colors mb-8"
         >
           <ArrowLeft size={14} />
-          Back to Orders
+          Volver a órdenes
         </button>
         <div className="text-center py-20 text-muted text-sm">
-          {error || "Order not found"}
+          {error || "Orden no encontrada"}
         </div>
       </div>
     );
@@ -69,13 +77,13 @@ export default function OrderDetailPage() {
         className="flex items-center gap-2 text-muted hover:text-white text-xs tracking-[0.15em] uppercase transition-colors mb-6"
       >
         <ArrowLeft size={14} />
-        Back to Orders
+        Volver a órdenes
       </button>
 
       {/* Header */}
       <DashboardHeader
         title={order.orderNumber}
-        subtitle={`Placed on ${new Date(order.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}`}
+        subtitle={`Realizada el ${new Date(order.createdAt).toLocaleDateString("es-AR", { year: "numeric", month: "long", day: "numeric" })}`}
         actions={<StatusBadge status={order.status} />}
       />
 
@@ -91,7 +99,7 @@ export default function OrderDetailPage() {
         {/* Customer */}
         <div className="bg-card rounded-sm p-5">
           <h3 className="text-[0.6rem] tracking-[0.2em] text-muted uppercase mb-4">
-            Customer
+            Cliente
           </h3>
           <div className="space-y-2">
             <p className="text-sm text-white">
@@ -104,7 +112,7 @@ export default function OrderDetailPage() {
         {/* Shipping Address */}
         <div className="bg-card rounded-sm p-5">
           <h3 className="text-[0.6rem] tracking-[0.2em] text-muted uppercase mb-4">
-            Shipping Address
+            Dirección de envío
           </h3>
           <div className="space-y-1 text-sm">
             <p className="text-white">{order.shippingAddress.receiverName}</p>
@@ -128,7 +136,7 @@ export default function OrderDetailPage() {
         {/* Update Status */}
         <div className="bg-card rounded-sm p-5">
           <h3 className="text-[0.6rem] tracking-[0.2em] text-muted uppercase mb-4">
-            Update Status
+            Actualizar estado
           </h3>
           {availableTransitions.length > 0 ? (
             <div className="flex flex-wrap gap-2">
@@ -143,13 +151,13 @@ export default function OrderDetailPage() {
                       : "bg-card-light text-white hover:bg-white/10"
                   }`}
                 >
-                  {isUpdating ? "..." : `Mark ${status}`}
+                  {isUpdating ? "..." : `Marcar como ${STATUS_LABELS[status]}`}
                 </button>
               ))}
             </div>
           ) : (
             <p className="text-xs text-muted italic">
-              This is a final state — no further transitions available.
+              Es un estado final — no hay más transiciones disponibles.
             </p>
           )}
         </div>
@@ -159,7 +167,7 @@ export default function OrderDetailPage() {
       <div className="bg-card rounded-sm mb-6">
         <div className="px-5 py-4 border-b border-white/5">
           <h3 className="text-[0.6rem] tracking-[0.2em] text-muted uppercase">
-            Items ({order.items.length})
+            Artículos ({order.items.length})
           </h3>
         </div>
         <div className="overflow-x-auto">
@@ -170,13 +178,13 @@ export default function OrderDetailPage() {
                   SKU
                 </th>
                 <th className="text-left text-[0.6rem] tracking-[0.2em] text-muted uppercase py-3 px-5 font-medium">
-                  Variant
+                  Variante
                 </th>
                 <th className="text-right text-[0.6rem] tracking-[0.2em] text-muted uppercase py-3 px-5 font-medium">
-                  Price
+                  Precio
                 </th>
                 <th className="text-right text-[0.6rem] tracking-[0.2em] text-muted uppercase py-3 px-5 font-medium">
-                  Qty
+                  Cant.
                 </th>
                 <th className="text-right text-[0.6rem] tracking-[0.2em] text-muted uppercase py-3 px-5 font-medium">
                   Subtotal
@@ -208,7 +216,7 @@ export default function OrderDetailPage() {
                   </td>
                   <td className="py-3 px-5 text-sm text-white/80 text-right">
                     $
-                    {item.priceAtPurchase.toLocaleString("en-US", {
+                    {item.priceAtPurchase.toLocaleString("es-AR", {
                       minimumFractionDigits: 2,
                     })}
                   </td>
@@ -218,7 +226,7 @@ export default function OrderDetailPage() {
                   <td className="py-3 px-5 text-sm text-white font-medium text-right">
                     $
                     {(item.priceAtPurchase * item.quantity).toLocaleString(
-                      "en-US",
+                      "es-AR",
                       { minimumFractionDigits: 2 },
                     )}
                   </td>
@@ -233,11 +241,11 @@ export default function OrderDetailPage() {
             {order.discountAmount > 0 && (
               <div className="flex items-center gap-6">
                 <span className="text-xs text-muted uppercase tracking-[0.1em]">
-                  Discount
+                  Descuento
                 </span>
                 <span className="text-sm text-success">
                   -$
-                  {order.discountAmount.toLocaleString("en-US", {
+                  {order.discountAmount.toLocaleString("es-AR", {
                     minimumFractionDigits: 2,
                   })}
                 </span>
@@ -249,7 +257,7 @@ export default function OrderDetailPage() {
               </span>
               <span className="text-lg text-white font-medium">
                 $
-                {order.totalAmount.toLocaleString("en-US", {
+                {order.totalAmount.toLocaleString("es-AR", {
                   minimumFractionDigits: 2,
                 })}
               </span>
@@ -263,7 +271,7 @@ export default function OrderDetailPage() {
         <div className="bg-card rounded-sm">
           <div className="px-5 py-4 border-b border-white/5">
             <h3 className="text-[0.6rem] tracking-[0.2em] text-muted uppercase">
-              Payment History
+              Historial de pagos
             </h3>
           </div>
           <div className="overflow-x-auto">
@@ -271,19 +279,19 @@ export default function OrderDetailPage() {
               <thead>
                 <tr className="border-b border-white/5">
                   <th className="text-left text-[0.6rem] tracking-[0.2em] text-muted uppercase py-3 px-5 font-medium">
-                    Method
+                    Método
                   </th>
                   <th className="text-left text-[0.6rem] tracking-[0.2em] text-muted uppercase py-3 px-5 font-medium">
-                    Status
+                    Estado
                   </th>
                   <th className="text-right text-[0.6rem] tracking-[0.2em] text-muted uppercase py-3 px-5 font-medium">
-                    Amount
+                    Monto
                   </th>
                   <th className="text-left text-[0.6rem] tracking-[0.2em] text-muted uppercase py-3 px-5 font-medium">
-                    Transaction ID
+                    ID de transacción
                   </th>
                   <th className="text-left text-[0.6rem] tracking-[0.2em] text-muted uppercase py-3 px-5 font-medium">
-                    Date
+                    Fecha
                   </th>
                 </tr>
               </thead>
@@ -301,7 +309,7 @@ export default function OrderDetailPage() {
                     </td>
                     <td className="py-3 px-5 text-sm text-white/80 text-right">
                       $
-                      {payment.amount.toLocaleString("en-US", {
+                      {payment.amount.toLocaleString("es-AR", {
                         minimumFractionDigits: 2,
                       })}
                     </td>
@@ -309,7 +317,7 @@ export default function OrderDetailPage() {
                       {payment.transactionId}
                     </td>
                     <td className="py-3 px-5 text-sm text-white/70">
-                      {new Date(payment.createdAt).toLocaleDateString("en-US", {
+                      {new Date(payment.createdAt).toLocaleDateString("es-AR", {
                         year: "numeric",
                         month: "short",
                         day: "numeric",

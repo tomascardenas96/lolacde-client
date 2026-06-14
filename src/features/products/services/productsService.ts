@@ -7,6 +7,7 @@ import {
   AddVariantResponse,
   CreateProductDto,
   CreateProductResponse,
+  GetAdminProductsParams,
   GetProductsParams,
   Product,
   ProductImage,
@@ -43,6 +44,35 @@ export const productsService = {
     }
   },
 
+  // Listado de inventario para administración (incluye productos inactivos).
+  getAdminProducts: async (
+    params: GetAdminProductsParams = {},
+  ): Promise<void> => {
+    const { setProducts, setLoading, setError } = useProductsStore.getState();
+    try {
+      setLoading(true);
+      const { data } = await apiClient.get<ProductsResponse>(
+        "/products/admin",
+        { params },
+      );
+      const products = data.products ?? [];
+      setProducts(products, data.total ?? products.length);
+      logger.info(
+        "PRODUCTS_SERVICE",
+        `${products.length} productos (admin) cargados (total: ${data.total ?? products.length})`,
+      );
+    } catch (error: unknown) {
+      const msg =
+        error instanceof AxiosError
+          ? error.response?.data?.message || "Error al obtener los productos"
+          : "Error al obtener los productos";
+      setError(msg);
+      logger.error("PRODUCTS_SERVICE", msg, error);
+    } finally {
+      setLoading(false);
+    }
+  },
+
   createProduct: async (
     payload: CreateProductDto,
   ): Promise<CreateProductResponse> => {
@@ -57,6 +87,12 @@ export const productsService = {
   getProductById: async (id: string): Promise<Product> => {
     const { data } = await apiClient.get<Product>(`/products/${id}`);
     logger.info("PRODUCTS_SERVICE", `Producto obtenido: ${id}`);
+    return data;
+  },
+
+  getProductBySlug: async (slug: string): Promise<Product> => {
+    const { data } = await apiClient.get<Product>(`/products/slug/${slug}`);
+    logger.info("PRODUCTS_SERVICE", `Producto obtenido por slug: ${slug}`);
     return data;
   },
 

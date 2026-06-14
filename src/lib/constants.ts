@@ -1,0 +1,1 @@
+export const phone = "542281576513";
