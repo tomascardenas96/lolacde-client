@@ -1,5 +1,6 @@
 import { apiClient } from "@/lib/api-client";
 import { logger } from "@/lib/logger";
+import { getApiErrorMessage } from "@/lib/error-utils";
 import { AuthResponse } from "@/types/auth";
 import { useAuthStore } from "../store/authStore";
 import { RegisterFormValues } from "../schemas/register-schema";
@@ -61,9 +62,7 @@ export const authService = {
                 logger.info("AUTH_SERVICE", "Login exitoso y Store actualizado.");
             }
         } catch (error: unknown) {
-            const errorMsg = error instanceof AxiosError
-                ? error.response?.data?.message || "Error en el servidor"
-                : "Error en el servidor";
+            const errorMsg = getApiErrorMessage(error, "No se pudo iniciar sesión");
             logger.error("AUTH_SERVICE", "Fallo en el inicio de sesión", errorMsg);
             throw error;
         } finally {
@@ -113,9 +112,7 @@ export const authService = {
                 logger.info("AUTH_SERVICE", "Registro exitoso y sesión iniciada");
             }
         } catch (error: unknown) {
-            const errorMsg = error instanceof AxiosError
-                ? error.response?.data?.message || "Error al intentar registrar a un usuario"
-                : "Error al intentar registrar a un usuario";
+            const errorMsg = getApiErrorMessage(error, "No se pudo completar el registro");
             logger.error("AUTH_SERVICE", "Fallo en el registro de usuario", errorMsg);
 
             throw error;

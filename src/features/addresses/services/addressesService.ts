@@ -1,20 +1,12 @@
 import { apiClient } from "@/lib/api-client";
 import { logger } from "@/lib/logger";
-import { AxiosError } from "axios";
+import { getApiErrorMessage } from "@/lib/error-utils";
 import { useAddressesStore } from "../store/addressesStore";
 import {
   Address,
   CreateAddressDto,
   UpdateAddressDto,
 } from "../types/state.types";
-
-const extractApiError = (error: unknown, fallback: string): string => {
-  if (!(error instanceof AxiosError)) return fallback;
-  const data = error.response?.data?.message;
-  if (Array.isArray(data)) return data.join(" · ");
-  if (typeof data === "string") return data;
-  return fallback;
-};
 
 export const addressesService = {
   getAddresses: async (): Promise<void> => {
@@ -25,7 +17,7 @@ export const addressesService = {
       setAddresses(data);
       logger.info("ADDRESSES_SERVICE", `${data.length} direcciones cargadas`);
     } catch (error: unknown) {
-      const msg = extractApiError(error, "Error al obtener las direcciones");
+      const msg = getApiErrorMessage(error, "No se pudieron cargar las direcciones");
       setError(msg);
       logger.error("ADDRESSES_SERVICE", msg, error);
     } finally {
@@ -41,7 +33,7 @@ export const addressesService = {
       logger.info("ADDRESSES_SERVICE", `Dirección creada: ${data.id}`);
       return data;
     } catch (error: unknown) {
-      const msg = extractApiError(error, "Error al crear la dirección");
+      const msg = getApiErrorMessage(error, "No se pudo crear la dirección");
       setError(msg);
       logger.error("ADDRESSES_SERVICE", msg, error);
       throw error;
@@ -62,7 +54,7 @@ export const addressesService = {
       logger.info("ADDRESSES_SERVICE", `Dirección actualizada: ${data.id}`);
       return data;
     } catch (error: unknown) {
-      const msg = extractApiError(error, "Error al actualizar la dirección");
+      const msg = getApiErrorMessage(error, "No se pudo actualizar la dirección");
       setError(msg);
       logger.error("ADDRESSES_SERVICE", msg, error);
       throw error;
@@ -80,9 +72,9 @@ export const addressesService = {
       logger.info("ADDRESSES_SERVICE", `Dirección predeterminada: ${data.id}`);
       return data;
     } catch (error: unknown) {
-      const msg = extractApiError(
+      const msg = getApiErrorMessage(
         error,
-        "Error al marcar la dirección como predeterminada",
+        "No se pudo marcar la dirección como predeterminada",
       );
       setError(msg);
       logger.error("ADDRESSES_SERVICE", msg, error);
@@ -97,7 +89,7 @@ export const addressesService = {
       removeAddress(addressId);
       logger.info("ADDRESSES_SERVICE", `Dirección eliminada: ${addressId}`);
     } catch (error: unknown) {
-      const msg = extractApiError(error, "Error al eliminar la dirección");
+      const msg = getApiErrorMessage(error, "No se pudo eliminar la dirección");
       setError(msg);
       logger.error("ADDRESSES_SERVICE", msg, error);
       throw error;

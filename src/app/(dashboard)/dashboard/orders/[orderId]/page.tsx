@@ -151,7 +151,11 @@ export default function OrderDetailPage() {
                       : "bg-card-light text-white hover:bg-white/10"
                   }`}
                 >
-                  {isUpdating ? "..." : `Marcar como ${STATUS_LABELS[status]}`}
+                  {isUpdating
+                    ? "..."
+                    : status === "cancelled"
+                      ? "Cancelar"
+                      : `Marcar como ${STATUS_LABELS[status]}`}
                 </button>
               ))}
             </div>

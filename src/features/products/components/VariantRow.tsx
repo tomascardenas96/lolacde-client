@@ -4,6 +4,7 @@ import { useState } from "react";
 import { AxiosError } from "axios";
 import { Loader2, Pencil, Trash2 } from "lucide-react";
 import { logger } from "@/lib/logger";
+import { getApiErrorMessage } from "@/lib/error-utils";
 import { useToast } from "@/components/ui/Toast";
 import { productsService } from "../services/productsService";
 import { VariantForm } from "./VariantForm";
@@ -52,13 +53,11 @@ export const VariantRow = ({
     } catch (err: unknown) {
       const status =
         err instanceof AxiosError ? err.response?.status : undefined;
-      const data =
-        err instanceof AxiosError ? err.response?.data?.message : undefined;
-      let msg = "No se pudo eliminar la variante";
-      if (Array.isArray(data)) msg = data.join(" · ");
-      else if (typeof data === "string") msg = data;
-      else if (status === 400)
-        msg = "No se puede eliminar la única variante del producto";
+      const fallback =
+        status === 400
+          ? "No se puede eliminar la única variante del producto"
+          : "No se pudo eliminar la variante";
+      const msg = getApiErrorMessage(err, fallback);
       setDeleteError(msg);
       logger.error("VARIANT_ROW", "Fallo al eliminar variante", err);
       setIsDeleting(false);

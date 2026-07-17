@@ -15,19 +15,22 @@ interface AuthInitializerProps {
  * Maneja la hidratación del estado y previene errores de mismatch entre servidor y cliente.
  */
 export const AuthInitializer = ({ children }: AuthInitializerProps) => {
-  // Extraemos los estados necesarios del store de Zustand
-  const isChecking = useAuthStore((state) => state.isChecking);
+  // Extraemos las acciones necesarias del store de Zustand
   const setChecking = useAuthStore((state) => state.setChecking);
   const clearAuth = useAuthStore((state) => state.clearAuth);
 
-  // Estado local para garantizar que el componente está montado en el navegador
-  const [isMounted, setIsMounted] = useState(false);
+  /**
+   * Estado local que solo refleja la verificación INICIAL de sesión.
+   * Importante: no usamos el `isChecking` global del store como gate de
+   * renderizado, porque ese flag lo togglea cualquier operación de auth
+   * (getMe, login, etc.). Si dependiéramos de él, desmontaríamos y
+   * volveríamos a montar todos los children en cada operación, lo que en
+   * páginas como confirm-email provoca un loop de remount/refetch.
+   */
+  const [isInitializing, setIsInitializing] = useState(true);
   const initialized = useRef(false);
 
   useEffect(() => {
-    // Marcamos el componente como montado (esto solo ocurre en el cliente)
-    setIsMounted(true);
-
     // Evitamos doble ejecución en StrictMode
     if (initialized.current) return;
     initialized.current = true;
@@ -48,6 +51,7 @@ export const AuthInitializer = ({ children }: AuthInitializerProps) => {
       } finally {
         // Liberamos el estado de carga pase lo que pase
         setChecking(false);
+        setIsInitializing(false);
       }
     };
 
@@ -56,19 +60,12 @@ export const AuthInitializer = ({ children }: AuthInitializerProps) => {
 
   /**
    * Pantalla de Carga (Splash Screen).
-   * Se muestra mientras 'isChecking' es true para evitar que el usuario vea
-   * contenido parpadeando antes de saber si tiene sesión.
+   * Se muestra únicamente durante la verificación inicial de sesión para
+   * evitar parpadeos. Como `isInitializing` arranca en `true` tanto en el
+   * servidor como en el primer render del cliente, no hay mismatch de
+   * hidratación.
    */
-  if (isChecking) return <LoadingSpinner label="Cargando..." />;
-
-  /**
-   * Control de Hidratación.
-   * Si no estamos en el cliente, retornamos null. Esto evita que Next.js intente
-   * comparar el HTML del servidor con un estado de cliente que aún no existe.
-   */
-  if (!isMounted) {
-    return null;
-  }
+  if (isInitializing) return <LoadingSpinner label="Cargando..." />;
 
   // Renderizado de la aplicación una vez autenticada/verificada.
   return <>{children}</>;

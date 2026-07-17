@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AxiosError } from "axios";
 import { logger } from "@/lib/logger";
+import { getApiErrorMessage } from "@/lib/error-utils";
 import { productsService } from "../services/productsService";
 import {
   UpdateProductFormValues,
@@ -16,14 +17,6 @@ interface UseEditProductFormOptions {
   productId: string;
   onUpdated?: (product: Product) => void;
 }
-
-const extractApiError = (err: unknown, fallback: string) => {
-  if (!(err instanceof AxiosError)) return fallback;
-  const data = err.response?.data?.message;
-  if (Array.isArray(data)) return data.join(" · ");
-  if (typeof data === "string") return data;
-  return fallback;
-};
 
 export const useEditProductForm = ({
   productId,
@@ -68,7 +61,7 @@ export const useEditProductForm = ({
           status === 404
             ? "El producto no existe o fue eliminado"
             : "No se pudo cargar el producto";
-        const msg = extractApiError(err, fallback);
+        const msg = getApiErrorMessage(err, fallback);
         setLoadError(msg);
         logger.error("EDIT_PRODUCT_FORM", "Fallo al cargar producto", err);
       } finally {
@@ -121,8 +114,8 @@ export const useEditProductForm = ({
         if (status === 404) fallback = "El producto ya no existe";
         else if (status === 409)
           fallback = "Ya existe un producto con ese nombre";
-        else if (status === 400) fallback = "Datos inválidos";
-        const msg = extractApiError(err, fallback);
+        else if (status === 400) fallback = "Revisá los datos ingresados";
+        const msg = getApiErrorMessage(err, fallback);
         setServerError(msg);
         logger.error("EDIT_PRODUCT_FORM", "Fallo al actualizar producto", err);
       }

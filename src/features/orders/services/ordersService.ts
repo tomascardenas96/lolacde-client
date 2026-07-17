@@ -1,6 +1,6 @@
 import { apiClient } from "@/lib/api-client";
 import { logger } from "@/lib/logger";
-import { AxiosError } from "axios";
+import { getApiErrorMessage } from "@/lib/error-utils";
 import { useOrdersStore } from "../store/ordersStore";
 import { useCartStore } from "@/features/cart/store/cartStore";
 import {
@@ -22,10 +22,7 @@ export const ordersService = {
       logger.info("ORDERS_SERVICE", `Orden creada: ${data.id}`);
       return data;
     } catch (error: unknown) {
-      const msg =
-        error instanceof AxiosError
-          ? error.response?.data?.message || "Error al crear la orden"
-          : "Error al crear la orden";
+      const msg = getApiErrorMessage(error, "No se pudo crear la orden");
       setError(msg);
       logger.error("ORDERS_SERVICE", msg, error);
       throw error;
@@ -44,10 +41,7 @@ export const ordersService = {
       logger.info("ORDERS_SERVICE", `Pago iniciado para orden ${orderId}`);
       return data;
     } catch (error: unknown) {
-      const msg =
-        error instanceof AxiosError
-          ? error.response?.data?.message || "Error al iniciar el pago"
-          : "Error al iniciar el pago";
+      const msg = getApiErrorMessage(error, "No se pudo iniciar el pago");
       setError(msg);
       logger.error("ORDERS_SERVICE", msg, error);
       throw error;
@@ -62,10 +56,7 @@ export const ordersService = {
       setOrders(data);
       logger.info("ORDERS_SERVICE", `${data.length} ordenes cargadas`);
     } catch (error: unknown) {
-      const msg =
-        error instanceof AxiosError
-          ? error.response?.data?.message || "Error al obtener las ordenes"
-          : "Error al obtener las ordenes";
+      const msg = getApiErrorMessage(error, "No se pudieron cargar las órdenes");
       setError(msg);
       logger.error("ORDERS_SERVICE", msg, error);
     } finally {
@@ -82,10 +73,7 @@ export const ordersService = {
       setSelectedOrder(data);
       logger.info("ORDERS_SERVICE", `Orden ${orderId} cargada`);
     } catch (error: unknown) {
-      const msg =
-        error instanceof AxiosError
-          ? error.response?.data?.message || "Error al obtener la orden"
-          : "Error al obtener la orden";
+      const msg = getApiErrorMessage(error, "No se pudo cargar la orden");
       setError(msg);
       logger.error("ORDERS_SERVICE", msg, error);
     } finally {

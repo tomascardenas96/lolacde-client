@@ -1,6 +1,6 @@
 import { apiClient } from "@/lib/api-client";
 import { logger } from "@/lib/logger";
-import { AxiosError } from "axios";
+import { getApiErrorMessage } from "@/lib/error-utils";
 import type {
   Customer,
   CustomersResponse,
@@ -40,10 +40,7 @@ export const customersService = {
         `${customers.length} clientes cargados (total: ${data.total ?? customers.length})`,
       );
     } catch (error: unknown) {
-      const msg =
-        error instanceof AxiosError
-          ? error.response?.data?.message || "Error al obtener los clientes"
-          : "Error al obtener los clientes";
+      const msg = getApiErrorMessage(error, "No se pudieron cargar los clientes");
       setError(msg);
       logger.error("CUSTOMERS_SERVICE", msg, error);
     } finally {

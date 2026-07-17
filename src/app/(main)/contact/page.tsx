@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AxiosError } from "axios";
+import { getApiErrorMessage } from "@/lib/error-utils";
 import { MapPin, Phone, Mail, Clock, Send, ArrowUpRight } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 import { contactService } from "@/features/contact/services/contactService";
@@ -34,11 +34,7 @@ export default function ContactPage() {
       reset();
       setTimeout(() => setSubmitted(false), 3000);
     } catch (error: unknown) {
-      const msg =
-        error instanceof AxiosError
-          ? error.response?.data?.message || "No se pudo enviar el mensaje"
-          : "No se pudo enviar el mensaje";
-      showToast(msg);
+      showToast(getApiErrorMessage(error, "No se pudo enviar el mensaje"));
     }
   };
 

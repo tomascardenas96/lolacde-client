@@ -4,7 +4,7 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { CheckCircle2, Loader2, XCircle } from "lucide-react";
-import { AxiosError } from "axios";
+import { getApiErrorMessage } from "@/lib/error-utils";
 import { authService } from "@/features/auth/services/authService";
 import { useAuthStore } from "@/features/auth/store/authStore";
 
@@ -38,11 +38,10 @@ function ConfirmEmailInner() {
           await authService.getMe();
         }
       } catch (error: unknown) {
-        const msg =
-          error instanceof AxiosError
-            ? error.response?.data?.message ||
-              "No se pudo confirmar el correo. El enlace puede haber expirado."
-            : "No se pudo confirmar el correo.";
+        const msg = getApiErrorMessage(
+          error,
+          "No se pudo confirmar el correo. El enlace puede haber expirado.",
+        );
         setStatus("error");
         setMessage(msg);
       }

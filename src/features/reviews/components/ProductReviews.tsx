@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AxiosError } from "axios";
+import { getApiErrorMessage } from "@/lib/error-utils";
 import { Star } from "lucide-react";
 import { useAuthStore } from "@/features/auth/store/authStore";
 import { useToast } from "@/components/ui/Toast";
@@ -132,11 +132,7 @@ export function ProductReviews({ productId }: { productId: string }) {
       setOffset(0);
       await Promise.all([loadReviews(0, false), loadEligibility()]);
     } catch (error: unknown) {
-      const msg =
-        error instanceof AxiosError
-          ? error.response?.data?.message || "No se pudo enviar la reseña"
-          : "No se pudo enviar la reseña";
-      showToast(msg);
+      showToast(getApiErrorMessage(error, "No se pudo enviar la reseña"));
     }
   };
 

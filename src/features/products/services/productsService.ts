@@ -1,6 +1,6 @@
 import { apiClient } from "@/lib/api-client";
 import { logger } from "@/lib/logger";
-import { AxiosError } from "axios";
+import { getApiErrorMessage } from "@/lib/error-utils";
 import { useProductsStore } from "../store/productsStore";
 import {
   AddVariantDto,
@@ -33,10 +33,7 @@ export const productsService = {
         `${products.length} productos cargados (total: ${data.total ?? products.length})`,
       );
     } catch (error: unknown) {
-      const msg =
-        error instanceof AxiosError
-          ? error.response?.data?.message || "Error al obtener los productos"
-          : "Error al obtener los productos";
+      const msg = getApiErrorMessage(error, "No se pudieron cargar los productos");
       setError(msg);
       logger.error("PRODUCTS_SERVICE", msg, error);
     } finally {
@@ -62,10 +59,7 @@ export const productsService = {
         `${products.length} productos (admin) cargados (total: ${data.total ?? products.length})`,
       );
     } catch (error: unknown) {
-      const msg =
-        error instanceof AxiosError
-          ? error.response?.data?.message || "Error al obtener los productos"
-          : "Error al obtener los productos";
+      const msg = getApiErrorMessage(error, "No se pudieron cargar los productos");
       setError(msg);
       logger.error("PRODUCTS_SERVICE", msg, error);
     } finally {
@@ -154,10 +148,7 @@ export const productsService = {
       removeProduct(id);
       logger.info("PRODUCTS_SERVICE", `Producto eliminado: ${id}`);
     } catch (error: unknown) {
-      const msg =
-        error instanceof AxiosError
-          ? error.response?.data?.message || "Error al eliminar el producto"
-          : "Error al eliminar el producto";
+      const msg = getApiErrorMessage(error, "No se pudo eliminar el producto");
       setError(msg);
       logger.error("PRODUCTS_SERVICE", msg, error);
       throw error;

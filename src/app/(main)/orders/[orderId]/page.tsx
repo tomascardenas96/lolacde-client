@@ -7,6 +7,7 @@ import { useOrdersStore } from "@/features/orders/store/ordersStore";
 import { ordersService } from "@/features/orders/services/ordersService";
 import { useAuthStore } from "@/features/auth/store/authStore";
 import { OrderStatus } from "@/features/orders/types/state.types";
+import Image from "next/image";
 import { ArrowLeft, CheckCircle2, Clock, Loader2, XCircle } from "lucide-react";
 
 const STATUS_LABELS: Record<OrderStatus, string> = {
@@ -133,7 +134,10 @@ function OrderDetailContent() {
   };
 
   const itemsSubtotal =
-    order?.items.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0) ?? 0;
+    order?.items.reduce(
+      (sum, i) => sum + Number(i.priceAtPurchase) * i.quantity,
+      0,
+    ) ?? 0;
   const subtotal =
     order?.subtotalAmount != null
       ? Number(order.subtotalAmount)
@@ -213,34 +217,48 @@ function OrderDetailContent() {
                 </span>
               </div>
 
-              {order.items.map((item, index) => (
-                <div key={item.id}>
-                  {index > 0 && <div className="border-t border-white/10" />}
-                  <div className="py-6 flex items-center justify-between">
-                    <div>
-                      <h3 className="text-sm font-semibold tracking-[0.1em] text-white uppercase">
-                        {item.variant.sku}
-                      </h3>
-                      <p className="text-xs tracking-[0.1em] text-muted uppercase mt-1">
-                        {Object.values(item.variant.attributes).join(" / ")}
-                      </p>
-                      <p className="text-xs text-muted mt-1">
-                        {item.quantity} x $
-                        {item.unitPrice.toLocaleString("en-US", {
-                          minimumFractionDigits: 2,
-                        })}
-                      </p>
+              {order.items.map((item, index) => {
+                const images = item.variant?.product?.images;
+                const mainImage =
+                  images?.find((img) => img.isMain) ?? images?.[0];
+                return (
+                  <div key={item.id}>
+                    {index > 0 && <div className="border-t border-white/10" />}
+                    <div className="py-6 flex gap-5">
+                      {/* Thumbnail */}
+                      <div className="w-16 h-20 shrink-0 overflow-hidden bg-card">
+                        {mainImage ? (
+                          <Image
+                            src={mainImage.url}
+                            alt={mainImage.alt ?? item.variant?.product?.name ?? ""}
+                            width={64}
+                            height={80}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : null}
+                      </div>
+
+                      {/* Info + precio */}
+                      <div className="flex flex-1 items-center justify-between gap-4">
+                        <div>
+                          <h3 className="text-sm font-semibold tracking-[0.1em] text-white uppercase">
+                            {item.variant?.product?.name ?? item.variant.sku}
+                          </h3>
+                          <p className="text-xs tracking-[0.1em] text-muted uppercase mt-1">
+                            {Object.values(item.variant.attributes).join(" / ")}
+                          </p>
+                          <p className="text-xs text-muted mt-1">
+                            {item.quantity} × ${fmt(Number(item.priceAtPurchase))}
+                          </p>
+                        </div>
+                        <p className="text-base text-white font-light shrink-0">
+                          ${fmt(Number(item.priceAtPurchase) * item.quantity)}
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-base text-white font-light">
-                      $
-                      {(item.unitPrice * item.quantity).toLocaleString(
-                        "en-US",
-                        { minimumFractionDigits: 2 },
-                      )}
-                    </p>
                   </div>
-                </div>
-              ))}
+                );
+              })}
               <div className="border-t border-white/10" />
             </div>
 

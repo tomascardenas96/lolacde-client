@@ -1,6 +1,14 @@
-import { CartItem } from "@/features/cart/types/state.types";
+import { CartItemVariant } from "@/features/cart/types/state.types";
 
 // --- API response types ---
+
+export interface OrderItem {
+  id: string;
+  quantity: number;
+  // decimal en Postgres → serializado como string por TypeORM
+  priceAtPurchase: number | string;
+  variant: CartItemVariant;
+}
 
 export type OrderStatus =
   | "pending"
@@ -43,7 +51,7 @@ export interface OrderDiscount {
 export interface Order {
   id: string;
   status: OrderStatus;
-  items: CartItem[];
+  items: OrderItem[];
   shippingAddress: OrderAddress;
   receiverName: string;
   phone: string;

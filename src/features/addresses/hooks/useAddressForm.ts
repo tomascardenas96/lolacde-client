@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AxiosError } from "axios";
 import { logger } from "@/lib/logger";
+import { getApiErrorMessage } from "@/lib/error-utils";
 import { AddressFormValues, addressSchema } from "../schemas/address.schema";
 import { addressesService } from "../services/addressesService";
 import { Address, CreateAddressDto } from "../types/state.types";
@@ -14,14 +15,6 @@ interface UseAddressFormOptions {
   address?: Address;
   onSuccess?: (address: Address) => void;
 }
-
-const extractApiError = (err: unknown, fallback: string) => {
-  if (!(err instanceof AxiosError)) return fallback;
-  const data = err.response?.data?.message;
-  if (Array.isArray(data)) return data.join(" · ");
-  if (typeof data === "string") return data;
-  return fallback;
-};
 
 const CREATE_DEFAULTS: AddressFormValues = {
   country: "",
@@ -87,8 +80,8 @@ export const useAddressForm = ({
           ? "No se pudo actualizar la dirección"
           : "No se pudo crear la dirección";
         if (status === 404) fallback = "La dirección ya no existe";
-        else if (status === 400) fallback = "Datos inválidos";
-        const msg = extractApiError(err, fallback);
+        else if (status === 400) fallback = "Revisá los datos ingresados";
+        const msg = getApiErrorMessage(err, fallback);
         setServerError(msg);
         logger.error("ADDRESS_FORM", "Fallo al guardar dirección", err);
       }

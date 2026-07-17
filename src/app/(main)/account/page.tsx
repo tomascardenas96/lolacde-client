@@ -1,12 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AxiosError } from "axios";
-import { CheckCircle2, ChevronRight, Loader2, MapPin, Mail } from "lucide-react";
-import { Button, Input, Modal } from "@/components/ui";
+import { getApiErrorMessage } from "@/lib/error-utils";
+import {
+  CheckCircle2,
+  ChevronRight,
+  Heart,
+  Loader2,
+  MapPin,
+  Mail,
+  Package,
+  ShieldAlert,
+} from "lucide-react";
+import { Badge, Button, Input, Modal } from "@/components/ui";
 import { useToast } from "@/components/ui/Toast";
 import { useAuthStore } from "@/features/auth/store/authStore";
 import { authService } from "@/features/auth/services/authService";
@@ -19,11 +28,6 @@ import {
   changePasswordSchema,
   type ChangePasswordValues,
 } from "@/features/auth/schemas/password.schema";
-
-const apiMessage = (error: unknown, fallback: string) =>
-  error instanceof AxiosError
-    ? error.response?.data?.message || fallback
-    : fallback;
 
 export default function AccountPage() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
@@ -41,13 +45,9 @@ export default function AccountPage() {
   if (!isAuthenticated || !user) {
     return (
       <main className="min-h-screen bg-background pt-28 pb-20">
-        <section className="px-6 md:px-20 lg:px-32 mb-12">
-          <h1 className="heading-display text-5xl md:text-7xl lg:text-8xl text-white mb-3">
-            MI <br /> CUENTA
-          </h1>
-        </section>
+        <AccountHeader />
         <section className="px-6 md:px-20 lg:px-32">
-          <div className="text-center py-20">
+          <div className="border border-white/8 bg-surface-1 text-center py-20 px-6 animate-fade-in-up">
             <p className="text-muted text-sm tracking-[0.1em] uppercase mb-6">
               Iniciá sesión para gestionar tu cuenta
             </p>
@@ -64,6 +64,59 @@ export default function AccountPage() {
   }
 
   return <AccountContent />;
+}
+
+/* ── Editorial header with champagne glow ─────────────────────── */
+function AccountHeader({ subtitle }: { subtitle?: string | null }) {
+  return (
+    <section className="relative px-6 md:px-20 lg:px-32 mb-14 md:mb-20">
+      <div className="glow-accent pointer-events-none absolute inset-x-6 md:inset-x-20 lg:inset-x-32 -top-24 h-80" />
+      <div className="relative">
+        <p className="eyebrow mb-5 animate-fade-in">Tu espacio personal</p>
+        <h1 className="heading-display text-5xl md:text-7xl lg:text-8xl text-white animate-fade-in-up">
+          MI <br /> CUENTA
+        </h1>
+        {subtitle && (
+          <p className="mt-5 text-[0.65rem] tracking-[0.15em] text-muted uppercase animate-fade-in-up">
+            {subtitle}
+          </p>
+        )}
+      </div>
+    </section>
+  );
+}
+
+/* ── Numbered editorial section wrapper ───────────────────────── */
+function SettingsSection({
+  index,
+  title,
+  children,
+  delay = 0,
+}: {
+  index: string;
+  title: string;
+  children: ReactNode;
+  delay?: number;
+}) {
+  return (
+    <section
+      className="group relative animate-fade-in-up border border-white/8 bg-surface-1 p-8 md:p-10 transition-colors duration-300 hover:border-white/15"
+      style={{ animationDelay: `${delay}ms` }}
+    >
+      {/* champagne hairline reveal on the left edge */}
+      <span className="absolute left-0 top-0 h-full w-px bg-accent/0 group-hover:bg-accent/40 transition-colors duration-300" />
+      <header className="flex items-center gap-5 mb-8">
+        <span className="heading-display text-xl leading-none text-accent">
+          {index}
+        </span>
+        <h2 className="text-[0.7rem] tracking-[0.25em] uppercase font-semibold text-white whitespace-nowrap">
+          {title}
+        </h2>
+        <span className="h-px flex-1 bg-white/8" />
+      </header>
+      {children}
+    </section>
+  );
 }
 
 function AccountContent() {
@@ -89,7 +142,7 @@ function AccountContent() {
       await authService.getMe();
       showToast("Perfil actualizado");
     } catch (error: unknown) {
-      showToast(apiMessage(error, "No se pudo actualizar el perfil"));
+      showToast(getApiErrorMessage(error, "No se pudo actualizar el perfil"));
     }
   };
 
@@ -109,7 +162,7 @@ function AccountContent() {
         confirmPassword: "",
       });
     } catch (error: unknown) {
-      showToast(apiMessage(error, "No se pudo cambiar la contraseña"));
+      showToast(getApiErrorMessage(error, "No se pudo cambiar la contraseña"));
     }
   };
 
@@ -119,7 +172,7 @@ function AccountContent() {
       await authService.sendConfirmationMail(user.email);
       showToast("Te reenviamos el correo de confirmación");
     } catch (error: unknown) {
-      showToast(apiMessage(error, "No se pudo reenviar el correo"));
+      showToast(getApiErrorMessage(error, "No se pudo reenviar el correo"));
     } finally {
       setResending(false);
     }
@@ -134,7 +187,7 @@ function AccountContent() {
     } catch (error: unknown) {
       setDeleting(false);
       setDeleteOpen(false);
-      showToast(apiMessage(error, "No se pudo eliminar la cuenta"));
+      showToast(getApiErrorMessage(error, "No se pudo eliminar la cuenta"));
     }
   };
 
@@ -145,146 +198,226 @@ function AccountContent() {
       })
     : null;
 
+  const birthDate = user.birthdate
+    ? new Date(user.birthdate).toLocaleDateString("es-AR", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      })
+    : null;
+
+  const initials =
+    `${user.name?.[0] ?? ""}${user.lastname?.[0] ?? ""}`.toUpperCase() || "?";
+
+  const roleLabel =
+    user.role?.name?.toLowerCase() === "admin" ? "Administrador" : "Cliente";
+
+  const quickLinks = [
+    { href: "/orders", label: "Mis pedidos", icon: Package },
+    { href: "/favorites", label: "Favoritos", icon: Heart },
+    { href: "/addresses", label: "Mis direcciones", icon: MapPin },
+  ];
+
   return (
-    <main className="min-h-screen bg-background pt-28 pb-20">
-      <section className="px-6 md:px-20 lg:px-32 mb-12">
-        <h1 className="heading-display text-5xl md:text-7xl lg:text-8xl text-white mb-3">
-          MI <br /> CUENTA
-        </h1>
-        {memberSince && (
-          <p className="text-[0.65rem] tracking-[0.15em] text-muted uppercase">
-            Miembro desde {memberSince}
-          </p>
-        )}
-      </section>
+    <main className="min-h-screen bg-background pt-28 pb-24">
+      <AccountHeader subtitle={memberSince ? `Miembro desde ${memberSince}` : null} />
 
-      <section className="px-6 md:px-20 lg:px-32 max-w-3xl space-y-px">
-        {/* Datos personales */}
-        <div className="bg-card p-8">
-          <h2 className="text-[0.7rem] tracking-[0.2em] text-white uppercase font-semibold mb-6">
-            Datos personales
-          </h2>
-          <form
-            onSubmit={profileForm.handleSubmit(onSaveProfile)}
-            className="space-y-5"
-          >
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              <Input
-                label="Nombre"
-                error={profileForm.formState.errors.name?.message}
-                {...profileForm.register("name")}
-              />
-              <Input
-                label="Apellido"
-                error={profileForm.formState.errors.lastname?.message}
-                {...profileForm.register("lastname")}
-              />
-            </div>
-            <Input label="Email" defaultValue={user.email} disabled />
-            <Button
-              type="submit"
-              variant="outline"
-              loading={profileForm.formState.isSubmitting}
-              disabled={!profileForm.formState.isDirty}
-            >
-              Guardar cambios
-            </Button>
-          </form>
-        </div>
+      <section className="px-6 md:px-20 lg:px-32">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10">
+          {/* ── Identity panel (sticky) ───────────────────────── */}
+          <aside className="lg:col-span-4 animate-fade-in-up">
+            <div className="lg:sticky lg:top-28 relative overflow-hidden border border-white/8 bg-surface-1 p-8">
+              <div className="glow-accent pointer-events-none absolute -top-16 -right-16 w-48 h-48 opacity-70" />
+              <div className="relative">
+                <div className="flex h-20 w-20 items-center justify-center rounded-full border border-accent/30 bg-accent/10 text-xl font-medium uppercase tracking-[0.15em] text-accent mb-6">
+                  {initials}
+                </div>
+                <h2 className="heading-display text-2xl md:text-3xl text-white leading-none mb-2">
+                  {user.name} {user.lastname}
+                </h2>
+                <p className="text-sm text-muted break-all mb-5">{user.email}</p>
 
-        {/* Estado del email */}
-        <div className="bg-card p-8">
-          <h2 className="text-[0.7rem] tracking-[0.2em] text-white uppercase font-semibold mb-6">
-            Correo electrónico
-          </h2>
-          {user.isEmailConfirmed ? (
-            <div className="flex items-center gap-2 text-sm text-green-400">
-              <CheckCircle2 className="w-4 h-4" />
-              Tu correo está confirmado
-            </div>
-          ) : (
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-2 text-sm text-yellow-400">
-                <Mail className="w-4 h-4" />
-                Tu correo todavía no está confirmado
+                <div className="flex flex-wrap gap-2 mb-7">
+                  <Badge variant="outline" size="sm">
+                    {roleLabel}
+                  </Badge>
+                  {user.isEmailConfirmed ? (
+                    <Badge variant="success" size="sm" dot>
+                      Email verificado
+                    </Badge>
+                  ) : (
+                    <Badge variant="warning" size="sm" dot>
+                      Sin verificar
+                    </Badge>
+                  )}
+                </div>
+
+                <dl className="space-y-3 py-6 border-t border-white/8">
+                  {memberSince && (
+                    <div className="flex items-center justify-between gap-4">
+                      <dt className="label-caps">Miembro desde</dt>
+                      <dd className="text-xs text-text-secondary capitalize">
+                        {memberSince}
+                      </dd>
+                    </div>
+                  )}
+                  {birthDate && (
+                    <div className="flex items-center justify-between gap-4">
+                      <dt className="label-caps">Nacimiento</dt>
+                      <dd className="text-xs text-text-secondary">{birthDate}</dd>
+                    </div>
+                  )}
+                </dl>
+
+                <nav className="space-y-px border-t border-white/8 pt-6">
+                  {quickLinks.map(({ href, label, icon: Icon }) => (
+                    <Link
+                      key={href}
+                      href={href}
+                      className="group flex items-center justify-between -mx-2 px-2 py-3 transition-colors hover:bg-white/[0.03]"
+                    >
+                      <span className="flex items-center gap-3">
+                        <Icon className="w-4 h-4 text-muted group-hover:text-accent transition-colors" />
+                        <span className="text-xs tracking-[0.08em] text-text-secondary group-hover:text-white transition-colors">
+                          {label}
+                        </span>
+                      </span>
+                      <ChevronRight className="w-4 h-4 text-text-subtle group-hover:text-white transition-colors" />
+                    </Link>
+                  ))}
+                </nav>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                loading={resending}
-                onClick={handleResend}
+            </div>
+          </aside>
+
+          {/* ── Settings sections ─────────────────────────────── */}
+          <div className="lg:col-span-8 space-y-6">
+            {/* 01 — Datos personales */}
+            <SettingsSection index="01" title="Datos personales" delay={60}>
+              <form
+                onSubmit={profileForm.handleSubmit(onSaveProfile)}
+                className="space-y-5"
               >
-                Reenviar confirmación
-              </Button>
-            </div>
-          )}
-        </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <Input
+                    label="Nombre"
+                    error={profileForm.formState.errors.name?.message}
+                    {...profileForm.register("name")}
+                  />
+                  <Input
+                    label="Apellido"
+                    error={profileForm.formState.errors.lastname?.message}
+                    {...profileForm.register("lastname")}
+                  />
+                </div>
+                <Input label="Email" defaultValue={user.email} disabled />
+                <div className="pt-1">
+                  <Button
+                    type="submit"
+                    variant="outline"
+                    loading={profileForm.formState.isSubmitting}
+                    disabled={!profileForm.formState.isDirty}
+                  >
+                    Guardar cambios
+                  </Button>
+                </div>
+              </form>
+            </SettingsSection>
 
-        {/* Cambio de contraseña */}
-        <div className="bg-card p-8">
-          <h2 className="text-[0.7rem] tracking-[0.2em] text-white uppercase font-semibold mb-6">
-            Cambiar contraseña
-          </h2>
-          <form
-            onSubmit={passwordForm.handleSubmit(onChangePassword)}
-            className="space-y-5"
-          >
-            <Input
-              label="Contraseña actual"
-              type="password"
-              error={passwordForm.formState.errors.oldPassword?.message}
-              {...passwordForm.register("oldPassword")}
-            />
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              <Input
-                label="Nueva contraseña"
-                type="password"
-                error={passwordForm.formState.errors.newPassword?.message}
-                {...passwordForm.register("newPassword")}
-              />
-              <Input
-                label="Repetir nueva contraseña"
-                type="password"
-                error={passwordForm.formState.errors.confirmPassword?.message}
-                {...passwordForm.register("confirmPassword")}
-              />
-            </div>
-            <Button
-              type="submit"
-              variant="outline"
-              loading={passwordForm.formState.isSubmitting}
+            {/* 02 — Correo electrónico */}
+            <SettingsSection index="02" title="Correo electrónico" delay={120}>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+                <div className="flex items-start gap-3">
+                  {user.isEmailConfirmed ? (
+                    <CheckCircle2 className="w-5 h-5 text-success shrink-0 mt-0.5" />
+                  ) : (
+                    <Mail className="w-5 h-5 text-warning shrink-0 mt-0.5" />
+                  )}
+                  <div>
+                    <p className="text-sm text-white break-all">{user.email}</p>
+                    <p
+                      className={`mt-1 text-xs ${
+                        user.isEmailConfirmed ? "text-success" : "text-warning"
+                      }`}
+                    >
+                      {user.isEmailConfirmed
+                        ? "Tu correo está confirmado"
+                        : "Tu correo todavía no está confirmado"}
+                    </p>
+                  </div>
+                </div>
+                {!user.isEmailConfirmed && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    loading={resending}
+                    onClick={handleResend}
+                  >
+                    Reenviar confirmación
+                  </Button>
+                )}
+              </div>
+            </SettingsSection>
+
+            {/* 03 — Seguridad */}
+            <SettingsSection index="03" title="Seguridad" delay={180}>
+              <form
+                onSubmit={passwordForm.handleSubmit(onChangePassword)}
+                className="space-y-5"
+              >
+                <Input
+                  label="Contraseña actual"
+                  type="password"
+                  error={passwordForm.formState.errors.oldPassword?.message}
+                  {...passwordForm.register("oldPassword")}
+                />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <Input
+                    label="Nueva contraseña"
+                    type="password"
+                    error={passwordForm.formState.errors.newPassword?.message}
+                    {...passwordForm.register("newPassword")}
+                  />
+                  <Input
+                    label="Repetir nueva contraseña"
+                    type="password"
+                    error={passwordForm.formState.errors.confirmPassword?.message}
+                    {...passwordForm.register("confirmPassword")}
+                  />
+                </div>
+                <div className="pt-1">
+                  <Button
+                    type="submit"
+                    variant="outline"
+                    loading={passwordForm.formState.isSubmitting}
+                  >
+                    Actualizar contraseña
+                  </Button>
+                </div>
+              </form>
+            </SettingsSection>
+
+            {/* Danger zone */}
+            <section
+              className="relative overflow-hidden border border-danger/20 bg-danger/[0.03] p-8 md:p-10 animate-fade-in-up"
+              style={{ animationDelay: "240ms" }}
             >
-              Actualizar contraseña
-            </Button>
-          </form>
-        </div>
-
-        {/* Direcciones */}
-        <Link
-          href="/addresses"
-          className="bg-card p-8 flex items-center justify-between group hover:bg-surface-3 transition-colors"
-        >
-          <div className="flex items-center gap-3">
-            <MapPin className="w-4 h-4 text-muted" />
-            <span className="text-sm text-white tracking-[0.05em]">
-              Gestionar mis direcciones
-            </span>
+              <header className="flex items-center gap-5 mb-6">
+                <ShieldAlert className="w-5 h-5 text-danger/80 shrink-0" />
+                <h2 className="text-[0.7rem] tracking-[0.25em] uppercase font-semibold text-danger whitespace-nowrap">
+                  Zona de riesgo
+                </h2>
+                <span className="h-px flex-1 bg-danger/15" />
+              </header>
+              <p className="text-sm text-muted mb-6 max-w-md leading-relaxed">
+                Al eliminar tu cuenta perderás el acceso a tus pedidos, favoritos
+                y direcciones guardadas. Esta acción no se puede deshacer.
+              </p>
+              <Button variant="danger" onClick={() => setDeleteOpen(true)}>
+                Eliminar mi cuenta
+              </Button>
+            </section>
           </div>
-          <ChevronRight className="w-4 h-4 text-muted group-hover:text-white transition-colors" />
-        </Link>
-
-        {/* Eliminar cuenta */}
-        <div className="bg-card p-8">
-          <h2 className="text-[0.7rem] tracking-[0.2em] text-danger uppercase font-semibold mb-3">
-            Eliminar cuenta
-          </h2>
-          <p className="text-sm text-muted mb-6 max-w-md">
-            Al eliminar tu cuenta perderás el acceso a tus pedidos, favoritos y
-            direcciones guardadas. Esta acción no se puede deshacer.
-          </p>
-          <Button variant="danger" onClick={() => setDeleteOpen(true)}>
-            Eliminar mi cuenta
-          </Button>
         </div>
       </section>
 

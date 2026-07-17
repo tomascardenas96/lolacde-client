@@ -5,6 +5,7 @@ import { useFieldArray, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AxiosError } from "axios";
 import { logger } from "@/lib/logger";
+import { getApiErrorMessage } from "@/lib/error-utils";
 import {
   AddVariantFormValues,
   addVariantSchema,
@@ -22,14 +23,6 @@ interface UseVariantFormOptions {
   variant?: ProductVariant;
   onSuccess?: (variant: ProductVariant) => void;
 }
-
-const extractApiError = (err: unknown, fallback: string) => {
-  if (!(err instanceof AxiosError)) return fallback;
-  const data = err.response?.data?.message;
-  if (Array.isArray(data)) return data.join(" · ");
-  if (typeof data === "string") return data;
-  return fallback;
-};
 
 const CREATE_DEFAULTS: AddVariantFormValues = {
   price: 0,
@@ -117,8 +110,8 @@ export const useVariantForm = ({
             : "El producto ya no existe";
         else if (status === 409)
           fallback = "Ya existe una variante con esos atributos";
-        else if (status === 400) fallback = "Datos inválidos";
-        const msg = extractApiError(err, fallback);
+        else if (status === 400) fallback = "Revisá los datos ingresados";
+        const msg = getApiErrorMessage(err, fallback);
         setServerError(msg);
         logger.error("VARIANT_FORM", "Fallo al guardar variante", err);
       }

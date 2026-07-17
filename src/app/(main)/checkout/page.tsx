@@ -14,7 +14,7 @@ import { discountService } from "@/features/discount/services/discountService";
 import type { ShippingMethod } from "@/features/shipping/types/state.types";
 import type { DiscountValidation } from "@/features/discount/types/state.types";
 import { useToast } from "@/components/ui/Toast";
-import { AxiosError } from "axios";
+import { getApiErrorMessage } from "@/lib/error-utils";
 import { ArrowLeft, Loader2, Tag, X } from "lucide-react";
 
 const formatMoney = (n: number) =>
@@ -82,11 +82,7 @@ export default function CheckoutPage() {
       setAppliedCoupon(result);
       showToast("Cupón aplicado");
     } catch (err: unknown) {
-      const msg =
-        err instanceof AxiosError
-          ? err.response?.data?.message || "Cupón inválido"
-          : "Cupón inválido";
-      setCouponError(msg);
+      setCouponError(getApiErrorMessage(err, "Cupón inválido"));
       setAppliedCoupon(null);
     } finally {
       setIsValidatingCoupon(false);
@@ -104,7 +100,7 @@ export default function CheckoutPage() {
   const effectiveAddressId =
     selectedAddressId && addresses.some((a) => a.id === selectedAddressId)
       ? selectedAddressId
-      : (addresses.find((a) => a.isDefault) ?? addresses[0])?.id ?? "";
+      : ((addresses.find((a) => a.isDefault) ?? addresses[0])?.id ?? "");
 
   // Si hay métodos de envío disponibles, exigimos que se elija uno.
   const requiresShipping = shippingMethods.length > 0;
@@ -173,7 +169,7 @@ export default function CheckoutPage() {
   }
 
   return (
-    <main className="min-h-screen bg-background pt-28 pb-20">
+    <main className="min-h-[calc(100vh-7rem)] bg-background pt-28 pb-20 grid">
       {/* Header */}
       <section className="px-6 md:px-20 lg:px-32 mb-12">
         <Link
@@ -234,9 +230,7 @@ export default function CheckoutPage() {
                           onChange={() => setSelectedAddressId(addr.id)}
                           className="sr-only"
                         />
-                        <p className="text-sm text-white">
-                          {addr.addressLine}
-                        </p>
+                        <p className="text-sm text-white">{addr.addressLine}</p>
                         <p className="text-xs text-muted mt-1">
                           {addr.city}, {addr.state}
                           {addr.zipCode ? ` ${addr.zipCode}` : ""} -{" "}

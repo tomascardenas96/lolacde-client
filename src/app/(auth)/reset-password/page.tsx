@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AxiosError } from "axios";
+import { getApiErrorMessage } from "@/lib/error-utils";
 import { authService } from "@/features/auth/services/authService";
 import {
   resetPasswordSchema,
@@ -40,11 +40,9 @@ function ResetPasswordForm() {
       setDone(true);
       setTimeout(() => router.push("/login"), 2500);
     } catch (error: unknown) {
-      const msg =
-        error instanceof AxiosError
-          ? error.response?.data?.message || "No se pudo restablecer la contraseña"
-          : "No se pudo restablecer la contraseña";
-      setServerError(msg);
+      setServerError(
+        getApiErrorMessage(error, "No se pudo restablecer la contraseña"),
+      );
     }
   };
 

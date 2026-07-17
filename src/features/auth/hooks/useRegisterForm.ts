@@ -4,8 +4,8 @@ import { useTransition, useState } from "react"
 import { useForm } from "react-hook-form";
 import { RegisterFormValues, registerSchema } from "../schemas/register-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AxiosError } from "axios";
 import { logger } from "@/lib/logger";
+import { getApiErrorMessage } from "@/lib/error-utils";
 import { authService } from "../services/authService";
 
 export const useRegisterForm = () => {
@@ -37,10 +37,7 @@ export const useRegisterForm = () => {
 
                 window.location.href = "/login";
             } catch (err: unknown) {
-                const msg =
-                    err instanceof AxiosError
-                        ? err.response?.data?.message || "Error al intentar registrar a un usuario"
-                        : "Error al intentar registrar a un usuario";
+                const msg = getApiErrorMessage(err, "No se pudo completar el registro");
                 setServerError(msg);
                 logger.error("REGISTER_FORM", "Fallo en el registro del usuario", msg);
             }

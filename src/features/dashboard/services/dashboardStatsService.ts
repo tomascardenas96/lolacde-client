@@ -1,6 +1,6 @@
 import { apiClient } from "@/lib/api-client";
 import { logger } from "@/lib/logger";
-import { AxiosError } from "axios";
+import { getApiErrorMessage } from "@/lib/error-utils";
 import type {
   CustomersResponse,
   DashboardStats,
@@ -37,10 +37,7 @@ export const dashboardStatsService = {
         `Stats cargadas (revenue: ${statsRes.data.revenue}, órdenes: ${statsRes.data.orderCount})`,
       );
     } catch (error: unknown) {
-      const msg =
-        error instanceof AxiosError
-          ? error.response?.data?.message || "Error al obtener las métricas"
-          : "Error al obtener las métricas";
+      const msg = getApiErrorMessage(error, "No se pudieron cargar las métricas");
       setError(msg);
       logger.error("DASHBOARD_STATS_SERVICE", msg, error);
     } finally {

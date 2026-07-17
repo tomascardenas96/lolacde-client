@@ -4,8 +4,8 @@ import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { LoginFormValues, loginSchema } from "../schemas/login.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AxiosError } from "axios";
 import { logger } from "@/lib/logger";
+import { getApiErrorMessage } from "@/lib/error-utils";
 import { authService } from "../services/authService";
 
 export const useLoginForm = () => {
@@ -31,10 +31,10 @@ export const useLoginForm = () => {
 
                 router.push("/");
             } catch (err: unknown) {
-                const msg =
-                    err instanceof AxiosError
-                        ? err.response?.data?.message || "Error de conexión con el servidor"
-                        : "Error de conexión con el servidor";
+                const msg = getApiErrorMessage(
+                    err,
+                    "No se pudo iniciar sesión. Revisá tu email y contraseña.",
+                );
                 setServerError(msg);
                 logger.error("LOGIN_FORM", "Fallo en la autenticación", msg);
             }

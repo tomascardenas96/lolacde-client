@@ -1,6 +1,6 @@
 import { apiClient } from "@/lib/api-client";
 import { logger } from "@/lib/logger";
-import { AxiosError } from "axios";
+import { getApiErrorMessage } from "@/lib/error-utils";
 import { useAdminOrdersStore } from "../store/adminOrdersStore";
 import type {
   AdminOrder,
@@ -18,7 +18,11 @@ export const adminOrdersService = {
       const params: Record<string, string | number> = {};
       if (query.limit) params.limit = query.limit;
       if (query.offset !== undefined) params.offset = query.offset;
-      if (query.status) params.status = query.status;
+      if (query.statuses && query.statuses.length > 0) {
+        params.statuses = query.statuses.join(",");
+      } else if (query.status) {
+        params.status = query.status;
+      }
 
       const { data } = await apiClient.get<AdminOrdersResponse>(
         "/orders/admin",
@@ -30,10 +34,7 @@ export const adminOrdersService = {
         `${data.data.length} órdenes cargadas (total: ${data.total})`,
       );
     } catch (error: unknown) {
-      const msg =
-        error instanceof AxiosError
-          ? error.response?.data?.message || "Error al obtener las órdenes"
-          : "Error al obtener las órdenes";
+      const msg = getApiErrorMessage(error, "No se pudieron cargar las órdenes");
       setError(msg);
       logger.error("ADMIN_ORDERS_SERVICE", msg, error);
     } finally {
@@ -52,10 +53,7 @@ export const adminOrdersService = {
       setSelectedOrder(data);
       logger.info("ADMIN_ORDERS_SERVICE", `Orden ${orderId} cargada`);
     } catch (error: unknown) {
-      const msg =
-        error instanceof AxiosError
-          ? error.response?.data?.message || "Error al obtener la orden"
-          : "Error al obtener la orden";
+      const msg = getApiErrorMessage(error, "No se pudo cargar la orden");
       setError(msg);
       logger.error("ADMIN_ORDERS_SERVICE", msg, error);
     } finally {
@@ -78,10 +76,10 @@ export const adminOrdersService = {
         `Orden ${orderId} actualizada a ${status}`,
       );
     } catch (error: unknown) {
-      const msg =
-        error instanceof AxiosError
-          ? error.response?.data?.message || "Error al actualizar el estado"
-          : "Error al actualizar el estado";
+      const msg = getApiErrorMessage(
+        error,
+        "No se pudo actualizar el estado de la orden",
+      );
       setError(msg);
       logger.error("ADMIN_ORDERS_SERVICE", msg, error);
       throw error;

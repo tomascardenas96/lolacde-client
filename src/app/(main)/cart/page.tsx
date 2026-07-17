@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useCartStore } from "@/features/cart/store/cartStore";
@@ -33,17 +33,37 @@ export default function CartPage() {
   const itemCount = items.reduce((sum, i) => sum + i.quantity, 0);
   const subtotal = items.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0);
 
-  const handleUpdateQuantity = async (itemId: string, quantity: number) => {
-    if (quantity <= 0) {
-      await cartService.removeItem(itemId);
-    } else {
-      await cartService.updateItemQuantity(itemId, quantity);
+  const [pendingItems, setPendingItems] = useState<Set<string>>(new Set());
+
+  // Ejecuta una mutación sobre un item evitando peticiones duplicadas
+  // (doble click / clicks rápidos), que dejarían un request apuntando a un
+  // item ya eliminado y devolverían 404 "Cart item not found".
+  const runItemMutation = async (
+    itemId: string,
+    mutate: () => Promise<void>,
+  ) => {
+    if (pendingItems.has(itemId)) return;
+    setPendingItems((prev) => new Set(prev).add(itemId));
+    try {
+      await mutate();
+    } finally {
+      setPendingItems((prev) => {
+        const next = new Set(prev);
+        next.delete(itemId);
+        return next;
+      });
     }
   };
 
-  const handleRemoveItem = async (itemId: string) => {
-    await cartService.removeItem(itemId);
-  };
+  const handleUpdateQuantity = (itemId: string, quantity: number) =>
+    runItemMutation(itemId, () =>
+      quantity <= 0
+        ? cartService.removeItem(itemId)
+        : cartService.updateItemQuantity(itemId, quantity),
+    );
+
+  const handleRemoveItem = (itemId: string) =>
+    runItemMutation(itemId, () => cartService.removeItem(itemId));
 
   const formatAttributes = (attrs: Record<string, string>) =>
     Object.entries(attrs)
@@ -90,7 +110,7 @@ export default function CartPage() {
             </p>
           </div>
         ) : items.length === 0 ? (
-          <div className="text-center py-34 flex justify-center items-center gap-6">
+          <div className="text-center py-34 flex flex-col justify-center items-center gap-6">
             <p className="text-muted text-sm tracking-widest uppercase">
               Tu carrito esta vacio
             </p>
@@ -158,7 +178,8 @@ export default function CartPage() {
                         </div>
                         <button
                           onClick={() => handleRemoveItem(item.id)}
-                          className="text-muted hover:text-white transition-colors cursor-pointer"
+                          disabled={pendingItems.has(item.id)}
+                          className="text-muted hover:text-white transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                           <X className="w-4 h-4" />
                         </button>
@@ -171,7 +192,8 @@ export default function CartPage() {
                             onClick={() =>
                               handleUpdateQuantity(item.id, item.quantity - 1)
                             }
-                            className="text-[2rem] tracking-[0.15em] text-muted hover:text-white transition-colors cursor-pointer uppercase"
+                            disabled={pendingItems.has(item.id)}
+                            className="text-[2rem] tracking-[0.15em] text-muted hover:text-white transition-colors cursor-pointer uppercase disabled:opacity-30 disabled:cursor-not-allowed"
                           >
                             -
                           </button>
@@ -182,7 +204,10 @@ export default function CartPage() {
                             onClick={() =>
                               handleUpdateQuantity(item.id, item.quantity + 1)
                             }
-                            disabled={item.quantity >= item.variant?.stock}
+                            disabled={
+                              pendingItems.has(item.id) ||
+                              item.quantity >= item.variant?.stock
+                            }
                             className="text-[2rem] tracking-[0.15em] text-muted hover:text-white transition-colors cursor-pointer uppercase disabled:opacity-30 disabled:cursor-not-allowed"
                           >
                             +

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Search } from "lucide-react";
+import { Plus, Search, Star } from "lucide-react";
 import { cartService } from "@/features/cart/services/cartService";
 import { productsService } from "@/features/products/services/productsService";
 import { useProductsStore } from "@/features/products/store/productsStore";
@@ -81,7 +81,7 @@ export default function CataloguePage() {
   };
 
   return (
-    <main className="min-h-screen bg-background pt-28 pb-20">
+    <main className="min-h-screen bg-background pt-28 pb-40">
       {/* Header */}
       <section className="relative px-6 md:px-20 lg:px-24 2xl:px-28 mb-16">
         <div className="glow-accent absolute inset-x-0 -top-28 h-72 pointer-events-none" />
@@ -145,7 +145,7 @@ export default function CataloguePage() {
       {/* Product Grid */}
       <section className="px-6 md:px-20 lg:px-24 2xl:px-28">
         {isLoading && products.length === 0 ? (
-          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-12">
+          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-5 gap-y-14">
             {Array.from({ length: PAGE_SIZE }).map((_, i) => (
               <ProductCardSkeleton key={i} />
             ))}
@@ -160,11 +160,12 @@ export default function CataloguePage() {
           </p>
         ) : (
           <>
-            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-12">
-              {products.map((product) => (
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-5 gap-y-14">
+              {products.map((product, index) => (
                 <ProductCard
                   key={product.id}
                   product={product}
+                  index={index}
                   isAuthenticated={isAuthenticated}
                   showToast={showToast}
                 />
@@ -216,11 +217,17 @@ export default function CataloguePage() {
 
 interface ProductCardProps {
   product: Product;
+  index: number;
   isAuthenticated: boolean;
   showToast: (message: string) => void;
 }
 
-function ProductCard({ product, isAuthenticated, showToast }: ProductCardProps) {
+function ProductCard({
+  product,
+  index,
+  isAuthenticated,
+  showToast,
+}: ProductCardProps) {
   const variants = product.variants ?? [];
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(
     variants.find((v) => v.stock > 0)?.id ?? variants[0]?.id ?? null,
@@ -237,6 +244,9 @@ function ProductCard({ product, isAuthenticated, showToast }: ProductCardProps) 
   const image = mainImage?.url ?? FALLBACK_IMAGE;
   const hoverImage = images.find((img) => img.url !== image);
   const canAdd = !!selectedVariant && selectedVariant.stock > 0;
+
+  const rating = Number(product.averageRating);
+  const hasRating = product.totalReviews > 0 && Number.isFinite(rating);
 
   const handleAdd = async () => {
     if (!selectedVariant) return;
@@ -255,14 +265,17 @@ function ProductCard({ product, isAuthenticated, showToast }: ProductCardProps) 
     }
   };
 
-  const imgSizes =
-    "(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, 50vw";
+  const imgSizes = "(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, 50vw";
 
   return (
-    <article className="group flex flex-col">
+    <article
+      className="group flex flex-col animate-fade-in-up"
+      style={{ animationDelay: `${Math.min(index, 7) * 70}ms` }}
+    >
       <div className="relative aspect-4/5 w-full overflow-hidden bg-surface-1">
         <Link
           href={`/catalogue/${product.slug}`}
+          aria-label={product.name}
           className="absolute inset-0 block"
         >
           <Image
@@ -287,51 +300,80 @@ function ProductCard({ product, isAuthenticated, showToast }: ProductCardProps) 
           )}
         </Link>
 
+        {/* Hairline frame — intensifies on hover */}
+        <div className="pointer-events-none absolute inset-0 z-10 border border-white/[0.06] transition-colors duration-500 group-hover:border-white/20" />
+
         {!inStock && (
-          <span className="absolute top-3 left-3 z-10 bg-black/70 backdrop-blur-sm text-white text-[0.5rem] tracking-[0.2em] uppercase px-2.5 py-1">
+          <span className="absolute top-3 left-3 z-20 bg-black/70 backdrop-blur-sm text-white text-[0.5rem] tracking-[0.25em] uppercase px-2.5 py-1">
             Agotado
           </span>
         )}
 
         <FavoriteButton
           productId={product.id}
-          className="absolute top-3 right-3 z-10 w-9 h-9 bg-black/50 backdrop-blur-sm hover:bg-black/70"
+          className="absolute top-3 right-3 z-20 w-9 h-9 bg-black/50 backdrop-blur-sm hover:bg-black/70"
           iconClassName="w-4 h-4"
         />
 
         {/* Quick add — slides up on hover/focus (desktop), always shown on touch */}
         {inStock && (
-          <div className="absolute inset-x-0 bottom-0 z-10 p-2.5 bg-gradient-to-t from-black/85 via-black/30 to-transparent opacity-0 translate-y-3 pointer-events-none transition-all duration-300 ease-out group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:translate-y-0 group-focus-within:pointer-events-auto [@media(hover:none)]:opacity-100 [@media(hover:none)]:translate-y-0 [@media(hover:none)]:pointer-events-auto">
+          <div className="absolute inset-x-0 bottom-0 z-20 p-3 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 translate-y-3 pointer-events-none transition-all duration-300 ease-out group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:translate-y-0 group-focus-within:pointer-events-auto [@media(hover:none)]:opacity-100 [@media(hover:none)]:translate-y-0 [@media(hover:none)]:pointer-events-auto">
             <button
               disabled={isAdding || !canAdd}
               onClick={(e) => {
                 e.stopPropagation();
                 handleAdd();
               }}
-              className="w-full bg-white text-black py-2 text-[0.6rem] tracking-[0.2em] uppercase font-semibold hover:bg-accent transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex w-full items-center justify-center gap-2 bg-white text-black py-2.5 text-[0.6rem] tracking-[0.22em] uppercase font-semibold hover:bg-accent transition-colors duration-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isAdding ? "Agregando..." : "Agregar al carrito"}
+              {isAdding ? (
+                "Agregando..."
+              ) : (
+                <>
+                  <Plus className="w-3 h-3" strokeWidth={2.5} />
+                  Agregar al carrito
+                </>
+              )}
             </button>
           </div>
         )}
       </div>
 
-      <div className="pt-3 flex flex-col flex-1">
-        <p className="text-[0.55rem] tracking-[0.2em] text-muted uppercase mb-1">
-          {product.category?.name}
-        </p>
-        <Link href={`/catalogue/${product.slug}`}>
-          <h3 className="text-xs tracking-[0.12em] text-white uppercase font-semibold hover:text-accent transition-colors line-clamp-1">
+      <div className="pt-4 flex flex-col flex-1">
+        {/* Meta row — category + price */}
+        <div className="flex items-baseline justify-between gap-3 mb-1.5">
+          <p className="min-w-0 truncate text-[0.55rem] tracking-[0.25em] text-accent/80 uppercase">
+            {product.category?.name}
+          </p>
+          <p className="shrink-0 text-xs font-light text-white/90 tabular-nums">
+            ${selectedVariant ? formatPrice(selectedVariant.price) : "0"}
+          </p>
+        </div>
+
+        {/* Name with animated underline */}
+        <Link href={`/catalogue/${product.slug}`} className="relative block">
+          <h3 className="text-xs tracking-[0.12em] text-white uppercase font-semibold line-clamp-1">
             {product.name}
           </h3>
+          <span className="absolute -bottom-1 left-0 h-px w-0 bg-accent/70 transition-all duration-500 ease-out group-hover:w-full" />
         </Link>
-        <p className="text-xs text-white/70 mt-1">
-          ${selectedVariant ? formatPrice(selectedVariant.price) : "0"}
-        </p>
+
+        {/* Rating */}
+        {hasRating && (
+          <div className="mt-2 flex items-center gap-1.5">
+            <Star className="w-3 h-3 fill-accent text-accent" />
+            <span className="text-[0.6rem] tracking-[0.1em] text-white/80">
+              {rating.toFixed(1)}
+            </span>
+            <span className="text-[0.6rem] tracking-[0.1em] text-muted">
+              ({product.totalReviews})
+            </span>
+          </div>
+        )}
 
         {/* Variant selector */}
         {hasMultipleVariants && (
-          <div className="mt-2.5 flex flex-wrap gap-1.5">
+          <div className="mt-3 flex flex-wrap gap-1.5">
             {variants.map((variant) => {
               const isSelected = variant.id === selectedVariant?.id;
               const isOutOfStock = variant.stock <= 0;
@@ -344,7 +386,7 @@ function ProductCard({ product, isAuthenticated, showToast }: ProductCardProps) 
                   className={`px-2 py-1 text-[0.55rem] tracking-[0.12em] uppercase border transition-all duration-300 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed disabled:line-through ${
                     isSelected
                       ? "bg-white text-black border-white"
-                      : "bg-transparent text-muted border-white/20 hover:border-white/50 hover:text-white"
+                      : "bg-transparent text-muted border-white/15 hover:border-white/50 hover:text-white"
                   }`}
                 >
                   {variantLabel(variant)}
@@ -361,11 +403,15 @@ function ProductCard({ product, isAuthenticated, showToast }: ProductCardProps) 
 function ProductCardSkeleton() {
   return (
     <div className="flex flex-col">
-      <div className="aspect-4/5 w-full skeleton" />
-      <div className="pt-3 flex flex-col gap-2">
-        <div className="skeleton h-2 w-1/3" />
+      <div className="relative aspect-4/5 w-full skeleton">
+        <div className="pointer-events-none absolute inset-0 border border-white/[0.06]" />
+      </div>
+      <div className="pt-4 flex flex-col gap-2.5">
+        <div className="flex items-center justify-between">
+          <div className="skeleton h-2 w-1/3" />
+          <div className="skeleton h-2 w-1/6" />
+        </div>
         <div className="skeleton h-3 w-3/4" />
-        <div className="skeleton h-2.5 w-1/4" />
       </div>
     </div>
   );

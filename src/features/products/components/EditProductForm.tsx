@@ -3,9 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { AxiosError } from "axios";
 import { ArrowLeft, Loader2, Plus } from "lucide-react";
 import { logger } from "@/lib/logger";
+import { getApiErrorMessage } from "@/lib/error-utils";
 import { categoriesService } from "@/features/categories/services/categoriesService";
 import { Category } from "@/features/categories/types/state.types";
 import { useToast } from "@/components/ui/Toast";
@@ -59,11 +59,10 @@ export const EditProductForm = ({ productId }: EditProductFormProps) => {
         const list = await categoriesService.getCategories();
         if (active) setCategories(list);
       } catch (err: unknown) {
-        const msg =
-          err instanceof AxiosError
-            ? err.response?.data?.message ||
-              "No se pudieron cargar las categorías"
-            : "No se pudieron cargar las categorías";
+        const msg = getApiErrorMessage(
+          err,
+          "No se pudieron cargar las categorías",
+        );
         if (active) setCategoriesError(msg);
         logger.error("EDIT_PRODUCT_FORM", "Fallo al obtener categorías", err);
       } finally {

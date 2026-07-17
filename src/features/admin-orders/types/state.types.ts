@@ -73,13 +73,20 @@ export interface AdminOrdersQuery {
   limit?: number;
   offset?: number;
   status?: AdminOrderStatus;
+  // Varios estados a la vez (p. ej. la pestaña "Todas"). Tiene prioridad
+  // sobre `status` en el backend.
+  statuses?: AdminOrderStatus[];
 }
 
-// Valid status transitions
+// Valid status transitions.
+// `pending` solo admite cancelarse: el pase a `paid` lo hace el webhook de
+// MercadoPago automaticamente, nunca manualmente desde el dashboard.
+// Flujo del admin simplificado: pagada -> entregada (o cancelar). El estado
+// `shipped` se mantiene solo para ordenes antiguas que ya estuvieran ahi.
 export const STATUS_TRANSITIONS: Record<AdminOrderStatus, AdminOrderStatus[]> = {
-  pending: ["paid", "cancelled"],
-  paid: ["shipped", "cancelled"],
-  shipped: ["delivered"],
+  pending: ["cancelled"],
+  paid: ["delivered", "cancelled"],
+  shipped: ["delivered", "cancelled"],
   delivered: [],
   cancelled: [],
 };

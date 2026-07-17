@@ -78,7 +78,7 @@ export default function OrdersPage() {
           <div className="space-y-4">
             {orders.map((order) => {
               const total = order.items.reduce(
-                (sum, i) => sum + i.unitPrice * i.quantity,
+                (sum, i) => sum + Number(i.priceAtPurchase) * i.quantity,
                 0,
               );
               const itemCount = order.items.reduce(

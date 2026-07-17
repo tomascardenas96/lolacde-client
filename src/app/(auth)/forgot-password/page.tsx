@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AxiosError } from "axios";
+import { getApiErrorMessage } from "@/lib/error-utils";
 import { authService } from "@/features/auth/services/authService";
 import {
   forgotPasswordSchema,
@@ -30,11 +30,7 @@ export default function ForgotPasswordPage() {
       await authService.forgotPassword(values.email);
       setSent(true);
     } catch (error: unknown) {
-      const msg =
-        error instanceof AxiosError
-          ? error.response?.data?.message || "No se pudo enviar el correo"
-          : "No se pudo enviar el correo";
-      setServerError(msg);
+      setServerError(getApiErrorMessage(error, "No se pudo enviar el correo"));
     }
   };
 

@@ -1,29 +1,33 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { DashboardHeader } from "@/features/dashboard/components/DashboardHeader";
 import { DataTable } from "@/features/dashboard/components/DataTable";
 import { StatusBadge } from "@/features/dashboard/components/StatusBadge";
 import { useAdminOrdersStore } from "@/features/admin-orders/store/adminOrdersStore";
 import { adminOrdersService } from "@/features/admin-orders/services/adminOrdersService";
-import type {
-  AdminOrder,
-  AdminOrderStatus,
+import {
+  STATUS_TRANSITIONS,
+  type AdminOrder,
+  type AdminOrderStatus,
+  type AdminOrdersQuery,
 } from "@/features/admin-orders/types/state.types";
 import type { Column } from "@/features/dashboard/types/dashboard.types";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 
 const LIMIT = 10;
 
 const tabs: { label: string; value: AdminOrderStatus | "all" }[] = [
   { label: "Todas", value: "all" },
-  { label: "Pendientes", value: "pending" },
-  { label: "Pagadas", value: "paid" },
-  { label: "Enviadas", value: "shipped" },
+  { label: "Pendientes de entrega", value: "paid" },
   { label: "Entregadas", value: "delivered" },
   { label: "Canceladas", value: "cancelled" },
 ];
+
+// Estados visibles en la pestaña "Todas": ocultamos las pendientes de pago
+// (y las legacy en "shipped"), que no son parte del flujo de entrega.
+const ALL_TAB_STATUSES: AdminOrderStatus[] = ["paid", "delivered", "cancelled"];
 
 const columns: Column<AdminOrder>[] = [
   {
@@ -73,22 +77,74 @@ const columns: Column<AdminOrder>[] = [
 
 export default function OrdersPage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<AdminOrderStatus | "all">("all");
+  const [activeTab, setActiveTab] = useState<AdminOrderStatus | "all">(
+    "paid",
+  );
   const [offset, setOffset] = useState(0);
+  const [deliveringId, setDeliveringId] = useState<string | null>(null);
   const { orders, total, isLoading, error } = useAdminOrdersStore();
 
-  useEffect(() => {
-    const query: { limit: number; offset: number; status?: AdminOrderStatus } = {
-      limit: LIMIT,
-      offset,
-    };
-    if (activeTab !== "all") query.status = activeTab;
+  const loadOrders = useCallback(() => {
+    const query: AdminOrdersQuery = { limit: LIMIT, offset };
+    if (activeTab === "all") {
+      query.statuses = ALL_TAB_STATUSES;
+    } else {
+      query.status = activeTab;
+    }
     adminOrdersService.getOrders(query);
   }, [activeTab, offset]);
+
+  useEffect(() => {
+    loadOrders();
+  }, [loadOrders]);
 
   const handleTabChange = (value: AdminOrderStatus | "all") => {
     setActiveTab(value);
     setOffset(0);
+  };
+
+  const handleMarkDelivered = async (order: AdminOrder) => {
+    if (deliveringId) return;
+    const ok = window.confirm(
+      `¿Marcar la orden ${order.orderNumber} como entregada? Esta acción no se puede deshacer.`,
+    );
+    if (!ok) return;
+    setDeliveringId(order.id);
+    try {
+      await adminOrdersService.updateStatus(order.id, "delivered");
+      // Recargamos el listado para que la orden salga del filtro actual
+      // (p. ej. "Pendientes de entrega") y los totales queden correctos.
+      loadOrders();
+    } catch {
+      // El error ya quedó reflejado en el banner (store.setError).
+    } finally {
+      setDeliveringId(null);
+    }
+  };
+
+  // Columna de acción: solo se puede entregar desde el listado si el estado
+  // actual admite la transición a "delivered" (paid o shipped).
+  const actionColumn: Column<AdminOrder> = {
+    key: "actions",
+    label: "",
+    render: (item) =>
+      STATUS_TRANSITIONS[item.status].includes("delivered") ? (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            handleMarkDelivered(item);
+          }}
+          disabled={deliveringId !== null}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[0.6rem] tracking-[0.1em] uppercase rounded-sm bg-card-light text-white hover:bg-white/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed whitespace-nowrap"
+        >
+          {deliveringId === item.id ? (
+            <Loader2 size={12} className="animate-spin" />
+          ) : (
+            <Check size={12} />
+          )}
+          Marcar entregada
+        </button>
+      ) : null,
   };
 
   const totalPages = Math.ceil(total / LIMIT);
@@ -134,7 +190,7 @@ export default function OrdersPage() {
           </div>
         ) : (
           <DataTable
-            columns={columns}
+            columns={[...columns, actionColumn]}
             data={orders}
             keyExtractor={(item) => item.id}
             onRowClick={(item) =>

@@ -3,8 +3,8 @@
 import { useState, useTransition } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AxiosError } from "axios";
 import { logger } from "@/lib/logger";
+import { getApiErrorMessage } from "@/lib/error-utils";
 import {
   CreateProductFormValues,
   createProductSchema,
@@ -99,16 +99,7 @@ export const useCreateProductForm = (options: UseCreateProductFormOptions = {}) 
         );
         onCreated?.({ productId: created.id, images });
       } catch (err: unknown) {
-        const apiMessage =
-          err instanceof AxiosError
-            ? err.response?.data?.message
-            : undefined;
-        const fallback = "No se pudo crear el producto";
-        const msg = Array.isArray(apiMessage)
-          ? apiMessage.join(" · ")
-          : typeof apiMessage === "string"
-            ? apiMessage
-            : fallback;
+        const msg = getApiErrorMessage(err, "No se pudo crear el producto");
         setServerError(msg);
         logger.error("CREATE_PRODUCT_FORM", "Fallo al crear el producto", err);
       } finally {
