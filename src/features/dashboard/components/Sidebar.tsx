@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Package,
+  Tags,
   Users,
   BarChart3,
   ShoppingCart,
@@ -18,6 +19,7 @@ import { useDashboardStore } from "../store/dashboardStore";
 const managementLinks = [
   { href: "/dashboard", label: "Resumen", icon: LayoutDashboard },
   { href: "/dashboard/inventory", label: "Inventario", icon: Package },
+  { href: "/dashboard/categories", label: "Categorías", icon: Tags },
   { href: "/dashboard/customers", label: "Clientes", icon: Users },
   { href: "/dashboard/analytics", label: "Analíticas", icon: BarChart3 },
 ];
