@@ -89,10 +89,10 @@ export function Navbar() {
 
   return (
     <nav
-      className={`left-0 right-0 z-50 flex items-center justify-between  transition-[padding,background-color] duration-500 ease-in-out ${
+      className={`left-0 right-0 z-50 flex items-center justify-between px-6 md:px-10 transition-[padding,background-color] duration-500 ease-in-out ${
         isFixed
-          ? "fixed top-0 animate-navbar-slide-down md:px-32 bg-black/15 py-5 backdrop-blur-sm"
-          : "absolute top-0 animate-navbar-slide-up md:px-32 bg-transparent py-4"
+          ? "fixed top-0 animate-navbar-slide-down lg:px-32 bg-black/15 py-5 backdrop-blur-sm"
+          : "absolute top-0 animate-navbar-slide-up lg:px-32 bg-transparent py-4"
       }`}
     >
       <Link
@@ -102,7 +102,7 @@ export function Navbar() {
         <Logo compact={isFixed} />
       </Link>
 
-      <ul className="hidden md:flex items-center gap-10">
+      <ul className="hidden lg:flex items-center gap-10">
         {navLinks.map((link) => (
           <li key={link.href}>
             <Link
