@@ -78,8 +78,8 @@ export const VariantForm = ({
                 {variant?.stock ?? 0}
               </p>
               <p className="mt-1 text-[11px] text-muted">
-                Se corrige desde Inventario, con un ajuste que deja su motivo
-                registrado.
+                Se corrige con el botón de ajuste de la variante, que deja el
+                motivo anotado en el kardex.
               </p>
             </>
           ) : (
