@@ -1,14 +1,15 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useFieldArray, useForm } from "react-hook-form";
+import { useFieldArray, useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AxiosError } from "axios";
 import { logger } from "@/lib/logger";
 import { getApiErrorMessage } from "@/lib/error-utils";
 import {
-  AddVariantFormValues,
+  VariantFormValues,
   addVariantSchema,
+  editVariantSchema,
 } from "../schemas/add-variant.schema";
 import { productsService } from "../services/productsService";
 import {
@@ -24,15 +25,18 @@ interface UseVariantFormOptions {
   onSuccess?: (variant: ProductVariant) => void;
 }
 
-const CREATE_DEFAULTS: AddVariantFormValues = {
+const CREATE_DEFAULTS: VariantFormValues = {
   price: 0,
   stock: 0,
   attributes: [],
 };
 
-const toFormValues = (variant: ProductVariant): AddVariantFormValues => ({
+/**
+ * En edición el stock queda fuera del formulario: es un saldo derivado del
+ * kardex y solo se corrige con un ajuste.
+ */
+const toFormValues = (variant: ProductVariant): VariantFormValues => ({
   price: Number(variant.price) || 0,
-  stock: variant.stock ?? 0,
   attributes: Object.entries(variant.attributes ?? {}).map(([key, value]) => ({
     key,
     value: String(value),
@@ -50,8 +54,12 @@ export const useVariantForm = ({
 
   const defaults = variant ? toFormValues(variant) : CREATE_DEFAULTS;
 
-  const form = useForm<AddVariantFormValues>({
-    resolver: zodResolver(addVariantSchema),
+  const form = useForm<VariantFormValues>({
+    // El schema depende del modo y react-hook-form no modela esa variación en
+    // el tipo del resolver: en alta `stock` es obligatorio, en edición no existe.
+    resolver: zodResolver(
+      isEdit ? editVariantSchema : addVariantSchema,
+    ) as Resolver<VariantFormValues>,
     defaultValues: defaults,
   });
 
@@ -62,14 +70,14 @@ export const useVariantForm = ({
 
   const addAttribute = () => attributesArray.append({ key: "", value: "" });
 
-  const buildAttributes = (values: AddVariantFormValues) =>
+  const buildAttributes = (values: VariantFormValues) =>
     values.attributes.reduce<Record<string, string>>((acc, entry) => {
       const key = entry.key.trim();
       if (key) acc[key] = entry.value.trim();
       return acc;
     }, {});
 
-  const onSubmit = (values: AddVariantFormValues) => {
+  const onSubmit = (values: VariantFormValues) => {
     startTransition(async () => {
       setServerError(null);
       const attributes = buildAttributes(values);
@@ -79,7 +87,6 @@ export const useVariantForm = ({
           logger.info("VARIANT_FORM", "Actualizando variante", variant.id);
           const dto: UpdateVariantDto = {
             price: values.price,
-            stock: values.stock,
             attributes,
           };
           result = await productsService.updateVariant(
@@ -91,7 +98,7 @@ export const useVariantForm = ({
           logger.info("VARIANT_FORM", "Creando variante", productId);
           const dto: AddVariantDto = {
             price: values.price,
-            stock: values.stock,
+            stock: values.stock ?? 0,
           };
           if (Object.keys(attributes).length > 0) dto.attributes = attributes;
           result = await productsService.addVariant(productId, dto);

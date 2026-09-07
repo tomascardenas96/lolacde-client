@@ -1,11 +1,20 @@
 "use client";
 
-import { ReactNode, useEffect, useRef, useState } from "react";
+import { ReactNode, useEffect, useRef, useSyncExternalStore } from "react";
 import { useAuthStore } from "@/features/auth/store/authStore";
 import { authService } from "@/features/auth/services/authService";
 import { logger } from "@/lib/logger";
 import { useRouter } from "next/navigation";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+
+/**
+ * Detección de montaje sin setState dentro de un efecto: el snapshot del
+ * servidor es `false` y el del cliente `true`, así que el valor correcto ya
+ * está disponible en el primer render y no hay render en cascada.
+ */
+const subscribeToNothing = () => () => {};
+const getMounted = () => true;
+const getMountedOnServer = () => false;
 
 export const AdminGuard = ({ children }: { children: ReactNode }) => {
   const isChecking = useAuthStore((state) => state.isChecking);
@@ -14,14 +23,16 @@ export const AdminGuard = ({ children }: { children: ReactNode }) => {
   const setChecking = useAuthStore((state) => state.setChecking);
   const clearAuth = useAuthStore((state) => state.clearAuth);
   const router = useRouter();
-  const [isMounted, setIsMounted] = useState(false);
+  const isMounted = useSyncExternalStore(
+    subscribeToNothing,
+    getMounted,
+    getMountedOnServer,
+  );
   const initialized = useRef(false);
 
   const isAdmin = user?.role?.name?.toUpperCase() === "ADMIN";
 
   useEffect(() => {
-    setIsMounted(true);
-
     if (initialized.current) return;
     initialized.current = true;
 

@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useSyncExternalStore } from "react";
 import Logo from "./Logo";
 
 const navLinks = [
@@ -30,6 +30,17 @@ const navLinks = [
 
 const SCROLL_THRESHOLD = 100;
 
+/**
+ * zustand/persist rehidrata de forma asincrónica. Se lee como store externo en
+ * lugar de espejarlo en un useState desde un efecto: `onFinishHydration`
+ * devuelve su propia baja, y si ya hidrató el snapshot lo dice desde el primer
+ * render.
+ */
+const subscribeAuthHydration = (onStoreChange: () => void) =>
+  useAuthStore.persist.onFinishHydration(onStoreChange);
+const getAuthHydrated = () => useAuthStore.persist.hasHydrated();
+const getAuthHydratedOnServer = () => false;
+
 export function Navbar() {
   const pathname = usePathname();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
@@ -40,20 +51,12 @@ export function Navbar() {
   const favoritesCount = useFavoritesStore((s) => s.ids.length);
   const [isFixed, setIsFixed] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [hydrated, setHydrated] = useState(false);
+  const hydrated = useSyncExternalStore(
+    subscribeAuthHydration,
+    getAuthHydrated,
+    getAuthHydratedOnServer,
+  );
   const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    // Zustand persist rehydrates asynchronously — wait for it
-    if (useAuthStore.persist.hasHydrated()) {
-      setHydrated(true);
-    } else {
-      const unsub = useAuthStore.persist.onFinishHydration(() => {
-        setHydrated(true);
-      });
-      return () => unsub();
-    }
-  }, []);
 
   useEffect(() => {
     if (hydrated && isAuthenticated) {
@@ -89,10 +92,10 @@ export function Navbar() {
 
   return (
     <nav
-      className={`left-0 right-0 z-50 flex items-center justify-between  transition-[padding,background-color] duration-500 ease-in-out ${
+      className={`left-0 right-0 z-50 flex items-center justify-between px-6 md:px-10 transition-[padding,background-color] duration-500 ease-in-out ${
         isFixed
-          ? "fixed top-0 animate-navbar-slide-down md:px-32 bg-black/15 py-5 backdrop-blur-sm"
-          : "absolute top-0 animate-navbar-slide-up md:px-32 bg-transparent py-4"
+          ? "fixed top-0 animate-navbar-slide-down lg:px-32 bg-black/15 py-5 backdrop-blur-sm"
+          : "absolute top-0 animate-navbar-slide-up lg:px-32 bg-transparent py-4"
       }`}
     >
       <Link
@@ -102,7 +105,7 @@ export function Navbar() {
         <Logo compact={isFixed} />
       </Link>
 
-      <ul className="hidden md:flex items-center gap-10">
+      <ul className="hidden lg:flex items-center gap-10">
         {navLinks.map((link) => (
           <li key={link.href}>
             <Link

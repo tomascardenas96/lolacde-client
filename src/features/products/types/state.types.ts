@@ -88,9 +88,13 @@ export type AddVariantResponse = ProductVariant;
 
 // --- Update variant DTO ---
 
+/**
+ * Sin `stock` a propósito: el backend lo omite en UpdateProductVariantDto y
+ * valida con forbidNonWhitelisted, así que mandarlo responde 400. El saldo es
+ * un derivado del kardex y se corrige con POST /inventory/adjustments.
+ */
 export interface UpdateVariantDto {
   price?: number;
-  stock?: number;
   attributes?: Record<string, string>;
 }
 

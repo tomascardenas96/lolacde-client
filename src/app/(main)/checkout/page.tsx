@@ -202,7 +202,7 @@ export default function CheckoutPage() {
         <section className="px-6 md:px-20 lg:px-32">
           <form
             onSubmit={handleCheckout}
-            className="flex flex-col lg:flex-row gap-40"
+            className="flex flex-col lg:flex-row gap-12"
           >
             {/* Form */}
             <div className="flex-1 space-y-10">

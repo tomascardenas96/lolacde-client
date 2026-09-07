@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import { AxiosError } from "axios";
-import { Loader2, Pencil, Trash2 } from "lucide-react";
+import { Loader2, Pencil, SlidersHorizontal, Trash2 } from "lucide-react";
 import { logger } from "@/lib/logger";
 import { getApiErrorMessage } from "@/lib/error-utils";
 import { useToast } from "@/components/ui/Toast";
+import { StockAdjustmentModal } from "@/features/inventory/components/StockAdjustmentModal";
+import type { CreateAdjustmentResponse } from "@/features/inventory/types/state.types";
 import { productsService } from "../services/productsService";
 import { VariantForm } from "./VariantForm";
 import type { ProductVariant } from "../types/state.types";
@@ -31,6 +33,7 @@ export const VariantRow = ({
 }: VariantRowProps) => {
   const { showToast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
+  const [isAdjusting, setIsAdjusting] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -41,6 +44,20 @@ export const VariantRow = ({
     onUpdated(updated);
     setIsEditing(false);
     showToast("Variante actualizada");
+  };
+
+  /**
+   * El saldo nuevo se toma de `balanceAfter` del movimiento, que es lo que
+   * quedó anotado en el kardex. `null` significa que la variante no controla
+   * stock: no hubo movimiento y tampoco es un error.
+   */
+  const handleAdjusted = (movement: CreateAdjustmentResponse) => {
+    if (!movement) {
+      showToast("Esta variante no controla stock");
+      return;
+    }
+    onUpdated({ ...variant, stock: movement.balanceAfter });
+    showToast("Ajuste registrado en el kardex");
   };
 
   const handleDelete = async () => {
@@ -117,6 +134,15 @@ export const VariantRow = ({
         <div className="flex items-center gap-1">
           <button
             type="button"
+            onClick={() => setIsAdjusting(true)}
+            title="Ajustar stock"
+            className="p-1.5 text-muted hover:text-white transition-colors cursor-pointer"
+            aria-label="Ajustar stock"
+          >
+            <SlidersHorizontal size={14} />
+          </button>
+          <button
+            type="button"
             onClick={() => setIsEditing(true)}
             className="p-1.5 text-muted hover:text-white transition-colors cursor-pointer"
             aria-label="Editar variante"
@@ -179,6 +205,15 @@ export const VariantRow = ({
       {deleteError && (
         <p className="mt-2 text-xs text-red-400">{deleteError}</p>
       )}
+
+      <StockAdjustmentModal
+        open={isAdjusting}
+        onClose={() => setIsAdjusting(false)}
+        variantId={variant.id}
+        variantSku={variant.sku}
+        currentStock={stock}
+        onAdjusted={handleAdjusted}
+      />
     </div>
   );
 };

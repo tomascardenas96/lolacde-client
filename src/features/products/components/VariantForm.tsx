@@ -70,22 +70,38 @@ export const VariantForm = ({
         </div>
         <div>
           <label className="block text-[10px] tracking-[0.2em] text-muted uppercase mb-2">
-            Stock
+            {isEdit ? "Stock actual" : "Stock inicial"}
           </label>
-          <input
-            type="number"
-            step="1"
-            min="0"
-            placeholder="50"
-            {...register("stock", { valueAsNumber: true })}
-            className={`w-full bg-card text-sm text-white px-3 py-2.5 rounded-sm outline-none border ${
-              errors.stock
-                ? "border-red-500/70"
-                : "border-transparent focus:border-white/20"
-            }`}
-          />
-          {errors.stock && (
-            <p className="mt-1 text-xs text-red-400">{errors.stock.message}</p>
+          {isEdit ? (
+            <>
+              <p className="w-full bg-card/50 text-sm text-muted px-3 py-2.5 rounded-sm border border-transparent">
+                {variant?.stock ?? 0}
+              </p>
+              <p className="mt-1 text-[11px] text-muted">
+                Se corrige con el botón de ajuste de la variante, que deja el
+                motivo anotado en el kardex.
+              </p>
+            </>
+          ) : (
+            <>
+              <input
+                type="number"
+                step="1"
+                min="0"
+                placeholder="50"
+                {...register("stock", { valueAsNumber: true })}
+                className={`w-full bg-card text-sm text-white px-3 py-2.5 rounded-sm outline-none border ${
+                  errors.stock
+                    ? "border-red-500/70"
+                    : "border-transparent focus:border-white/20"
+                }`}
+              />
+              {errors.stock && (
+                <p className="mt-1 text-xs text-red-400">
+                  {errors.stock.message}
+                </p>
+              )}
+            </>
           )}
         </div>
       </div>
