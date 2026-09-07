@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useSyncExternalStore } from "react";
 import Logo from "./Logo";
 
 const navLinks = [
@@ -30,6 +30,17 @@ const navLinks = [
 
 const SCROLL_THRESHOLD = 100;
 
+/**
+ * zustand/persist rehidrata de forma asincrónica. Se lee como store externo en
+ * lugar de espejarlo en un useState desde un efecto: `onFinishHydration`
+ * devuelve su propia baja, y si ya hidrató el snapshot lo dice desde el primer
+ * render.
+ */
+const subscribeAuthHydration = (onStoreChange: () => void) =>
+  useAuthStore.persist.onFinishHydration(onStoreChange);
+const getAuthHydrated = () => useAuthStore.persist.hasHydrated();
+const getAuthHydratedOnServer = () => false;
+
 export function Navbar() {
   const pathname = usePathname();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
@@ -40,20 +51,12 @@ export function Navbar() {
   const favoritesCount = useFavoritesStore((s) => s.ids.length);
   const [isFixed, setIsFixed] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [hydrated, setHydrated] = useState(false);
+  const hydrated = useSyncExternalStore(
+    subscribeAuthHydration,
+    getAuthHydrated,
+    getAuthHydratedOnServer,
+  );
   const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    // Zustand persist rehydrates asynchronously — wait for it
-    if (useAuthStore.persist.hasHydrated()) {
-      setHydrated(true);
-    } else {
-      const unsub = useAuthStore.persist.onFinishHydration(() => {
-        setHydrated(true);
-      });
-      return () => unsub();
-    }
-  }, []);
 
   useEffect(() => {
     if (hydrated && isAuthenticated) {
